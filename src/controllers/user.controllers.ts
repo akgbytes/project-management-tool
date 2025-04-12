@@ -37,7 +37,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   await sendVerificationMail(user.username, user.email, unHashedToken);
 
   res
-    .status(200)
+    .status(ResponseStatus.Success)
     .json(
       new ApiResponse(
         ResponseStatus.Success,
@@ -47,4 +47,83 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-export { registerUser };
+const verifyUser = asyncHandler(async (req: Request, res: Response) => {
+  const { token } = req.params;
+  if (!token)
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Verification token is required"
+    );
+
+  const user = await User.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpiry: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new CustomError(
+      ResponseStatus.Unauthorized,
+      "Invalid or expired token"
+    );
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpiry = undefined;
+
+  await user.save();
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(ResponseStatus.Success, {}, "Email verified successfully")
+    );
+});
+
+const resendVerificationEmail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new CustomError(
+        ResponseStatus.BadRequest,
+        "Email address is required to send verification link."
+      );
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new CustomError(
+        ResponseStatus.Unauthorized,
+        "No account found with this email address."
+      );
+    }
+
+    if (user.isEmailVerified) {
+      throw new CustomError(
+        ResponseStatus.BadRequest,
+        "Email is already verified"
+      );
+    }
+
+    const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
+
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpiry = tokenExpiry;
+
+    await sendVerificationMail(user.username, user.email, unHashedToken);
+    res
+      .status(ResponseStatus.Success)
+      .json(
+        new ApiResponse(
+          ResponseStatus.Success,
+          {},
+          "Verification mail sent successfully. Please check your inbox"
+        )
+      );
+  }
+);
+const loginUser = asyncHandler(async (req: Request, res: Response) => {});
+const logoutUser = asyncHandler(async (req: Request, res: Response) => {});
+
+export { registerUser, verifyUser };

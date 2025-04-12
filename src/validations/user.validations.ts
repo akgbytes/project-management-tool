@@ -21,7 +21,11 @@ const registerSchema = z.object({
   avatar: z.string().url({ message: "Invalid avatar url" }).optional(),
 });
 
-const loginSchema = registerSchema.omit({ fullName: true, username: true });
+const loginSchema = registerSchema.omit({
+  fullName: true,
+  username: true,
+  avatar: true,
+});
 
 type registerData = Zod.infer<typeof registerSchema>;
 type loginData = Zod.infer<typeof loginSchema>;
