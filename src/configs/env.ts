@@ -7,6 +7,12 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
   const envSchema = z.object({
     PORT: z.string().optional().default("8080"),
     MONGO_URI: z.string().nonempty(),
+    MAILTRAP_HOST: z.string().nonempty(),
+    MAILTRAP_PORT: z.string().nonempty(),
+    MAILTRAP_USERNAME: z.string().nonempty(),
+    MAILTRAP_PASSWORD: z.string().nonempty(),
+    MAILTRAP_SENDERMAIL: z.string().nonempty(),
+    APP_URL: z.string(),
   });
 
   const validationResult = envSchema.safeParse(env);

@@ -1,7 +1,35 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
-const userSchema = new mongoose.Schema(
+interface Avatar {
+  url: string;
+  localPath: string;
+}
+
+interface IUser extends Document {
+  username: string;
+  email: string;
+  password: string;
+  fullName?: string;
+  avatar: Avatar;
+  isEmailVerified: boolean;
+
+  emailVerificationToken?: string;
+  emailVerificationExpiry?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpiry?: Date;
+  refreshToken?: string;
+
+  isPasswordCorrect(password: string): Promise<boolean>;
+  generateToken(): {
+    hashedToken: string;
+    unHashedToken: string;
+    tokenExpiry: Date;
+  };
+}
+
+const userSchema = new mongoose.Schema<IUser>(
   {
     username: {
       type: String,
@@ -54,7 +82,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
+userSchema.pre<IUser>("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
@@ -62,6 +90,19 @@ userSchema.pre("save", async function (next) {
 
 userSchema.methods.isPasswordCorrect = async function (password: string) {
   return await bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.generateToken = function () {
+  const unHashedToken = crypto.randomBytes(32).toString("hex");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(unHashedToken)
+    .digest("hex");
+
+  const tokenExpiry = Date.now() + 20 * 60 * 1000; // 30 minutes;
+
+  return { unHashedToken, hashedToken, tokenExpiry };
 };
 
 const User = mongoose.model("User", userSchema);
