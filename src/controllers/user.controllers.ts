@@ -161,4 +161,12 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(ResponseStatus.Success, {}, "Login successful"));
 });
 
-export { registerUser, verifyUser, resendVerificationEmail };
+const logoutUser = asyncHandler(async (req: Request, res: Response) => {});
+
+export {
+  registerUser,
+  verifyUser,
+  resendVerificationEmail,
+  loginUser,
+  logoutUser,
+};
