@@ -128,4 +128,37 @@ const resendVerificationEmail = asyncHandler(
   }
 );
 
+const loginUser = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = handleZodError(validateLoginData(req.body));
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.NotFound, "User does not exist");
+  }
+
+  const isPasswordCorrect = await user.isPasswordCorrect(password);
+  if (!isPasswordCorrect) {
+    throw new CustomError(ResponseStatus.Unauthorized, "Invalid credentials");
+  }
+
+  // generating access n refresh token
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  res
+    .status(ResponseStatus.Success)
+    .cookie("accessToken", accessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    })
+    .cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    })
+    .json(new ApiResponse(ResponseStatus.Success, {}, "Login successful"));
+});
+
 export { registerUser, verifyUser, resendVerificationEmail };
