@@ -1,6 +1,9 @@
 import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import { env } from "../configs/env";
+import { StringValue } from "ms";
 
 interface Avatar {
   url: string;
@@ -22,6 +25,8 @@ interface IUser extends Document {
   refreshToken?: string;
 
   isPasswordCorrect(password: string): Promise<boolean>;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
   generateToken(): {
     hashedToken: string;
     unHashedToken: string;
@@ -100,9 +105,31 @@ userSchema.methods.generateToken = function () {
     .update(unHashedToken)
     .digest("hex");
 
-  const tokenExpiry = Date.now() + 20 * 60 * 1000; // 30 minutes;
+  const tokenExpiry = new Date(Date.now() + 20 * 60 * 1000);
 
   return { unHashedToken, hashedToken, tokenExpiry };
+};
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+    },
+    env.ACCESS_TOKEN_SECRET,
+    { expiresIn: env.ACCESS_TOKEN_EXPIRY as StringValue }
+  );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    env.REFRESH_TOKEN_SECRET,
+    { expiresIn: env.REFRESH_TOKEN_EXPIRY as StringValue }
+  );
 };
 
 const User = mongoose.model("User", userSchema);

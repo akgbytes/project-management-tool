@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import { validateRegisterData } from "../validations/user.validations";
+import {
+  validateLoginData,
+  validateRegisterData,
+} from "../validations/user.validations";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
 import { User } from "../models/user.models";
@@ -8,6 +11,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { sendVerificationMail } from "../utils/sendMail";
 import { handleZodError } from "../utils/handleZodError";
 
+// avatar handle logic remaining
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, username, avatar, fullName } = handleZodError(
     validateRegisterData(req.body)
@@ -123,7 +127,5 @@ const resendVerificationEmail = asyncHandler(
       );
   }
 );
-const loginUser = asyncHandler(async (req: Request, res: Response) => {});
-const logoutUser = asyncHandler(async (req: Request, res: Response) => {});
 
-export { registerUser, verifyUser };
+export { registerUser, verifyUser, resendVerificationEmail };
