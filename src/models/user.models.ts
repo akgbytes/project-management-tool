@@ -10,7 +10,7 @@ interface Avatar {
   localPath: string;
 }
 
-interface IUser extends Document {
+export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
