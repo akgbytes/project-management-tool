@@ -1,13 +1,18 @@
 import { z } from "zod";
 
 const registerSchema = z.object({
-  username: z
+  name: z
     .string()
-    .nonempty()
+    .trim()
+    .toLowerCase()
     .min(3, { message: "Username must be at least 3 characters long" })
     .max(20, { message: "Username must be at most 20 characters long" }),
 
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ message: "Invalid email address" }),
 
   password: z
     .string()
@@ -17,25 +22,20 @@ const registerSchema = z.object({
       message:
         "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character.",
     }),
-  fullName: z.string().optional(),
-  avatar: z.string().url({ message: "Invalid avatar url" }).optional(),
 });
 
-const loginSchema = registerSchema.omit({
-  fullName: true,
-  username: true,
-  avatar: true,
-});
+const loginSchema = registerSchema.omit({ name: true });
 
-type registerData = Zod.infer<typeof registerSchema>;
-type loginData = Zod.infer<typeof loginSchema>;
+// types
+type RegisterData = z.infer<typeof registerSchema>;
+type LoginData = z.infer<typeof loginSchema>;
 
-const validateRegisterData = (data: registerData) => {
+const validateRegisterData = (data: RegisterData) => {
   return registerSchema.safeParse(data);
 };
 
-const validateLoginData = (data: loginData) => {
+const validateLoginData = (data: LoginData) => {
   return loginSchema.safeParse(data);
 };
 
-export { validateLoginData, validateRegisterData };
+export { validateRegisterData, validateLoginData };

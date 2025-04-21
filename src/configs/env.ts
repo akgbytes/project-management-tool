@@ -5,7 +5,7 @@ dotenv.config();
 
 const createEnv = (env: NodeJS.ProcessEnv) => {
   const envSchema = z.object({
-    PORT: z.coerce.number().optional().default(8080),
+    PORT: z.coerce.number(),
     MONGO_URI: z.string().nonempty(),
 
     MAILTRAP_HOST: z.string().nonempty(),

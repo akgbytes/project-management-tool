@@ -8,8 +8,10 @@ import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
 import { User } from "../models/user.models";
 import { ApiResponse } from "../utils/ApiResponse";
-import { sendVerificationMail } from "../utils/sendMail";
+import { sendVerificationMail, sendResetPasswordMail } from "../utils/sendMail";
 import { handleZodError } from "../utils/handleZodError";
+import jwt from "jsonwebtoken";
+import { env } from "../configs/env";
 
 // avatar handle logic remaining
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
@@ -164,7 +166,7 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
 const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   const { _id } = req.body.user;
 
-  User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     { _id },
     {
       refreshToken: undefined,
@@ -180,10 +182,121 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new CustomError(ResponseStatus.BadRequest, "Missing required fields");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.NotFound, "User does not exits");
+  }
+
+  const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
+
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpiry = tokenExpiry;
+
+  await user.save();
+  await sendResetPasswordMail(user.username, user.email, unHashedToken);
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        {},
+        "If an account exists, a reset link has been sent to the email"
+      )
+    );
+});
+
+const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { resetToken } = req.params;
+  const { password } = req.body;
+
+  const user = await User.findOne({
+    resetPasswordToken: resetToken,
+    resetPasswordExpiry: { gt: new Date() },
+  });
+
+  if (!user) {
+    throw new CustomError(
+      ResponseStatus.Unauthorized,
+      "Token is invalid or expired"
+    );
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpiry = undefined;
+  await user.save();
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(ResponseStatus.Success, {}, "Password reset successfully")
+    );
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new CustomError(ResponseStatus.Unauthorized, "Unauthorized request");
+  }
+
+  let decodedToken: any;
+  try {
+    decodedToken = jwt.verify(incomingRefreshToken, env.REFRESH_TOKEN_SECRET);
+  } catch (error) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Invalid or expired refresh token"
+    );
+  }
+
+  const user = await User.findOne({ email: decodedToken.email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.Unauthorized, "Invalid token");
+  }
+
+  if (user.refreshToken !== incomingRefreshToken) {
+    throw new CustomError(
+      ResponseStatus.Forbidden,
+      "Refresh token has been used or is invalid"
+    );
+  }
+
+ 
+  let accessToken;
+  let refreshToken;
+
+  // Update token in DB
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "strict" as const,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(new ApiResponse(200, {}, "Access token refreshed successfully"));
+});
+
 export {
   registerUser,
   verifyUser,
   resendVerificationEmail,
   loginUser,
   logoutUser,
+  forgotPassword,
+  resetPassword,
 };

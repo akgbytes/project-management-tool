@@ -9,7 +9,7 @@ const connectDb = async () => {
     if (error instanceof Error) {
       console.log("Error connecting mongoDB : ", error.message);
     } else {
-      console.log("Unknown db error : ", error);
+      console.log("Unknown database error : ", error);
     }
     process.exit(1);
   }
