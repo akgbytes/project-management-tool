@@ -20,8 +20,10 @@ const errorHandler = (
   }
 
   res.status(customError.statusCode).json({
-    success: false,
+    success: customError.success,
     message: customError.message,
+    statusCode: customError.statusCode,
+    data: customError.data,
   });
 };
 

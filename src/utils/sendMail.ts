@@ -19,7 +19,7 @@ const sendMail = async (
 ) => {
   const transporter = nodemailer.createTransport({
     host: env.MAILTRAP_HOST,
-    port: +env.MAILTRAP_PORT,
+    port: env.MAILTRAP_PORT,
     secure: false, // true for port 465, false for other ports
     auth: {
       user: env.MAILTRAP_USERNAME,

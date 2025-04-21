@@ -9,7 +9,7 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
     MONGO_URI: z.string().nonempty(),
 
     MAILTRAP_HOST: z.string().nonempty(),
-    MAILTRAP_PORT: z.string().nonempty(),
+    MAILTRAP_PORT: z.coerce.number(),
     MAILTRAP_USERNAME: z.string().nonempty(),
     MAILTRAP_PASSWORD: z.string().nonempty(),
     MAILTRAP_SENDERMAIL: z.string().nonempty(),
@@ -30,7 +30,7 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
   } else {
     const errorMessage = validationResult.error.errors
       .map((err) => `${err.path.join(".")} :  ${err.message}`)
-      .join(", ");
+      .join("\n");
 
     throw new Error(errorMessage);
   }
