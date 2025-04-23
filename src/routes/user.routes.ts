@@ -8,10 +8,11 @@ import {
   verifyUser,
   logoutUser,
 } from "../controllers/user.controllers";
-import { isLoggedIn } from "../middlewares/auth.middleware";
+import { isLoggedIn } from "../middlewares/auth.middlewares";
+import { upload } from "../middlewares/multer.middlewares";
 
 // Auth routes
-router.post("/register", registerUser);
+router.post("/register", upload.single("avatar"), registerUser);
 router.get("/verify/:token", verifyUser);
 router.post("/resend-email", resendVerificationEmail);
 router.post("/login", loginUser);

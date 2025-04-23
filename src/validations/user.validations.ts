@@ -1,18 +1,12 @@
 import { z } from "zod";
 
 const registerSchema = z.object({
-  name: z
+  username: z
     .string()
-    .trim()
-    .toLowerCase()
     .min(3, { message: "Username must be at least 3 characters long" })
     .max(20, { message: "Username must be at most 20 characters long" }),
 
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email({ message: "Invalid email address" }),
+  email: z.string().email({ message: "Invalid email address" }),
 
   password: z
     .string()
@@ -22,9 +16,20 @@ const registerSchema = z.object({
       message:
         "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character.",
     }),
+
+  avatar: z.string().optional(),
+  fullName: z
+    .string()
+    .min(6, { message: "Full name must be at least 6 characters long" })
+    .max(20, { message: "Full name must be at most 20 characters long" })
+    .optional(),
 });
 
-const loginSchema = registerSchema.omit({ name: true });
+const loginSchema = registerSchema.omit({
+  username: true,
+  avatar: true,
+  fullName: true,
+});
 
 // types
 type RegisterData = z.infer<typeof registerSchema>;

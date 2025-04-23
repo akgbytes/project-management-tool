@@ -21,6 +21,10 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
 
     REFRESH_TOKEN_SECRET: z.string().nonempty(),
     REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
+
+    CLOUDINARY_NAME: z.string().nonempty(),
+    CLOUDINARY_API_KEY: z.string().nonempty(),
+    CLOUDINARY_SECRET_KEY: z.string().nonempty(),
   });
 
   const validationResult = envSchema.safeParse(env);

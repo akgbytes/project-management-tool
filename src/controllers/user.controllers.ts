@@ -12,10 +12,11 @@ import { sendVerificationMail, sendResetPasswordMail } from "../utils/sendMail";
 import { handleZodError } from "../utils/handleZodError";
 import jwt from "jsonwebtoken";
 import { env } from "../configs/env";
+import { uploadOnCloudinary } from "../configs/cloudinary";
 
 // avatar handle logic remaining
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, username, avatar, fullName } = handleZodError(
+  const { email, password, username, fullName } = handleZodError(
     validateRegisterData(req.body)
   );
 
@@ -25,7 +26,17 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     throw new CustomError(ResponseStatus.Conflict, "Email already registered");
   }
 
-  let user = await User.create({ email, password, username, avatar, fullName });
+  let imageUrl;
+  if (req.file) {
+    imageUrl = await uploadOnCloudinary(req.file.path);
+  }
+
+  let user = await User.create({
+    email,
+    password,
+    username,
+    fullName,
+  });
 
   if (!user) {
     throw new CustomError(
@@ -38,6 +49,15 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
+
+  // avatar url on db
+  if (imageUrl && req.file) {
+    user.avatar = {
+      url: imageUrl.url,
+      localPath: req.file.path,
+    };
+  }
+
   await user.save();
 
   await sendVerificationMail(user.username, user.email, unHashedToken);

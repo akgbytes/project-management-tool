@@ -11,7 +11,7 @@ const handleZodError = (result: SafeParseReturnType<any, any>) => {
     if (missing) {
       throw new CustomError(
         ResponseStatus.BadRequest,
-        "Missing required fields"
+        `Missing ${result.error.issues[0].path} field`
       );
     }
 
