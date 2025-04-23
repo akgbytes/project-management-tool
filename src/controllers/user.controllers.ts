@@ -269,7 +269,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 
- 
   let accessToken;
   let refreshToken;
 
@@ -299,4 +298,5 @@ export {
   logoutUser,
   forgotPassword,
   resetPassword,
+  refreshAccessToken,
 };

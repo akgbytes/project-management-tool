@@ -1,4 +1,4 @@
-import mongoose, { Document } from "mongoose";
+import { Document, model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -16,8 +16,8 @@ export interface IUser extends Document {
   password: string;
   fullName?: string;
   avatar: Avatar;
-  isEmailVerified: boolean;
 
+  isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpiry?: Date;
   resetPasswordToken?: string;
@@ -34,7 +34,7 @@ export interface IUser extends Document {
   };
 }
 
-const userSchema = new mongoose.Schema<IUser>(
+const userSchema = new Schema<IUser>(
   {
     username: {
       type: String,
@@ -132,6 +132,6 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-const User = mongoose.model("User", userSchema);
+const User = model("User", userSchema);
 
 export { User };
