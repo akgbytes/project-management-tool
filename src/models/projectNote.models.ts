@@ -1,3 +1,4 @@
+import { Project } from "./project.models";
 import { model, Schema } from "mongoose";
 
 export interface IProjectNote extends Document {

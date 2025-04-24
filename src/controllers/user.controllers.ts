@@ -14,7 +14,6 @@ import jwt from "jsonwebtoken";
 import { env } from "../configs/env";
 import { uploadOnCloudinary } from "../configs/cloudinary";
 
-// avatar handle logic remaining
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, username, fullName } = handleZodError(
     validateRegisterData(req.body)
@@ -24,11 +23,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
   if (existingUser) {
     throw new CustomError(ResponseStatus.Conflict, "Email already registered");
-  }
-
-  let imageUrl;
-  if (req.file) {
-    imageUrl = await uploadOnCloudinary(req.file.path);
   }
 
   let user = await User.create({
@@ -51,6 +45,11 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   user.emailVerificationExpiry = tokenExpiry;
 
   // avatar url on db
+  let imageUrl;
+  if (req.file) {
+    imageUrl = await uploadOnCloudinary(req.file.path);
+  }
+
   if (imageUrl && req.file) {
     user.avatar = {
       url: imageUrl.url,

@@ -16,6 +16,7 @@ app.use("/api/v1/healthcheck", healthCheckRouter);
 import userRouter from "./routes/user.routes";
 import { errorHandler } from "./middlewares/error.middlewares";
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/notes", userRouter);
 
 app.use(errorHandler);
 export default app;
