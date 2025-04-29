@@ -52,10 +52,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (imageUrl && req.file) {
-    user.avatar = {
-      url: imageUrl.url,
-      localPath: req.file.path,
-    };
+    user.avatar = imageUrl.secure_url;
   }
 
   await user.save();

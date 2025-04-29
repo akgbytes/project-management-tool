@@ -5,17 +5,12 @@ import jwt from "jsonwebtoken";
 import { env } from "../configs/env";
 import { StringValue } from "ms";
 
-interface Avatar {
-  url: string;
-  localPath: string;
-}
-
 export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
   fullName?: string;
-  avatar: Avatar;
+  avatar: string;
 
   isEmailVerified: boolean;
   emailVerificationToken: string | null;
@@ -66,14 +61,8 @@ const userSchema = new Schema<IUser>(
     },
 
     avatar: {
-      type: {
-        url: String,
-        localPath: String,
-      },
-      default: {
-        url: `https://placehold.co/200x200`,
-        localPath: "",
-      },
+      type: String,
+      default: "https://placehold.co/200x200",
     },
 
     emailVerificationToken: String,

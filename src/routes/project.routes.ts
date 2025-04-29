@@ -29,7 +29,7 @@ router.patch(
   updateProject
 );
 router.get("/getAll", getProjects);
-router.get("/get/projectId", getProjectById);
+router.get("/get/:projectId", getProjectById);
 router.post("/add-member", addMemberToProject);
 router.delete("delete-member", removeMember);
 router.get("/get/members", getProjectMembers);

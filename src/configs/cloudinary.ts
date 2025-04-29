@@ -2,6 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { env } from "./env";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
+import fs from "fs";
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY_NAME,
@@ -16,8 +17,10 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
       resource_type: "image",
     });
 
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
+    fs.unlinkSync(localFilePath);
     throw new CustomError(
       ResponseStatus.InternalServerError,
       "Failed to upload on cloudinary"
