@@ -30,9 +30,21 @@ router.patch(
 );
 router.get("/getAll", getProjects);
 router.get("/get/:projectId", getProjectById);
-router.post("/add-member", addMemberToProject);
-router.delete("delete-member", removeMember);
-router.get("/get/members", getProjectMembers);
-router.patch("/update/member-role", updateMemberRole);
+router.post(
+  "/add-member/:projectId",
+  checkPermission(Permissions.AddMember),
+  addMemberToProject
+);
+router.delete(
+  "delete-member/:projectId",
+  checkPermission(Permissions.RemoveMember),
+  removeMember
+);
+router.get("/get/members/:projectId", getProjectMembers);
+router.patch(
+  "/update/member-role/:projectId",
+  checkPermission(Permissions.UpdateRole),
+  updateMemberRole
+);
 
 export default router;

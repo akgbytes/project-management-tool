@@ -5,7 +5,6 @@ import { CustomError } from "../utils/CustomError";
 import {
   hasPermission,
   PermissionType,
-  UserRole,
   UserRoleType,
 } from "../utils/permissions";
 import { ResponseStatus } from "../utils/constants";

@@ -1,7 +1,11 @@
 import mongoose, { ObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler";
 import { handleZodError } from "../utils/handleZodError";
-import { validateProjectData } from "../validations/project.validations";
+import {
+  validateProjectData,
+  validateProjectMemberData,
+  validateRemoveProjectMemberData,
+} from "../validations/project.validations";
 import { Project } from "../models/project.models";
 import { ProjectMember } from "../models/projectMember";
 import { CustomError } from "../utils/CustomError";
@@ -9,6 +13,7 @@ import { ResponseStatus } from "../utils/constants";
 import { ApiResponse } from "../utils/ApiResponse";
 import { UserRole } from "../utils/permissions";
 import { extractUserField } from "../utils/helper";
+import { User } from "../models/user.models";
 
 const createProject = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -292,19 +297,154 @@ const getProjectById = asyncHandler(async (req, res) => {
 });
 
 const addMemberToProject = asyncHandler(async (req, res) => {
-  // add member to project
+  const { role, email } = handleZodError(validateProjectMemberData(req.body));
+  const userId = req.user._id;
+  const { projectId } = req.params;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.BadRequest, "User does not exist");
+  }
+
+  const existing = await ProjectMember.findOne({
+    user: userId,
+    project: projectId,
+  });
+
+  if (existing) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "User is already a member in this project"
+    );
+  }
+
+  const projectManagerExists = await ProjectMember.findOne({
+    user: userId,
+    project: projectId,
+    role: UserRole.ProjectManager,
+  });
+
+  if (projectManagerExists) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "There can't be more than one project manager in a project"
+    );
+  }
+
+  const projectMember = await ProjectMember.create({
+    role,
+    project: projectId,
+    user: user._id,
+  });
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        projectMember,
+        "Member added successfully"
+      )
+    );
 });
 
 const removeMember = asyncHandler(async (req, res) => {
-  // delete member from project
+  const { email } = handleZodError(validateRemoveProjectMemberData(req.body));
+  const { projectId } = req.params;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.BadRequest, "User does not exist");
+  }
+
+  const projectMember = await ProjectMember.findOne({
+    project: projectId,
+    user: user._id,
+  });
+
+  if (!projectMember) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "User is not member of this project"
+    );
+  }
+
+  await ProjectMember.findByIdAndDelete(projectMember._id);
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(ResponseStatus.Success, {}, "Member removed successfully")
+    );
 });
 
 const getProjectMembers = asyncHandler(async (req, res) => {
-  // get project members
+  const { projectId } = req.params;
+
+  const projectExists = await Project.findById(projectId);
+
+  if (!projectExists) {
+    throw new CustomError(ResponseStatus.BadRequest, "Project does not exists");
+  }
+
+  const projectMembers = await ProjectMember.find({
+    project: projectId,
+  }).populate("user", "username email fullName avatar");
+
+  const cleanData = projectMembers.map((member) => member.user);
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        cleanData,
+        "project memebers fetched successfully"
+      )
+    );
 });
 
 const updateMemberRole = asyncHandler(async (req, res) => {
-  // update member role
+  const { email, role } = handleZodError(validateProjectMemberData(req.body));
+  const { projectId } = req.params;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new CustomError(ResponseStatus.BadRequest, "User does not exist");
+  }
+
+  const projectMember = await ProjectMember.findOne({
+    project: projectId,
+    user: user._id,
+  });
+
+  if (!projectMember) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "User is not member of this project"
+    );
+  }
+
+  const projectManagerExists = await ProjectMember.findOne({
+    user: user._id,
+    project: projectId,
+    role: UserRole.ProjectManager,
+  });
+
+  if (projectManagerExists && role === UserRole.ProjectManager) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "There can't be more than one project manager in a project"
+    );
+  }
+
+  projectMember.role = role;
+  await projectMember.save();
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(ResponseStatus.Success, {}, "Role updated successfully")
+    );
 });
 
 export {

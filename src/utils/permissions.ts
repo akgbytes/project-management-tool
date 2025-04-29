@@ -9,10 +9,9 @@ export const Permissions = {
   CreateSubtask: "create:subtask",
   UpdateSubtask: "update:subtask",
   DeleteSubtask: "delete:subtask",
-  AddProjectManager: "add:project_manager",
-  RemoveProjectManager: "remove:project_manager",
   AddMember: "add:member",
   RemoveMember: "remove:member",
+  UpdateRole: "update:role",
 } as const;
 
 export const UserRolePermissions = {
@@ -21,8 +20,6 @@ export const UserRolePermissions = {
     Permissions.DeleteProject,
     Permissions.UpdateProject,
     Permissions.ViewProject,
-    Permissions.AddProjectManager,
-    Permissions.RemoveProjectManager,
     Permissions.CreateTask,
     Permissions.UpdateTask,
     Permissions.DeleteTask,
@@ -31,6 +28,7 @@ export const UserRolePermissions = {
     Permissions.DeleteSubtask,
     Permissions.AddMember,
     Permissions.RemoveMember,
+    Permissions.UpdateRole,
   ],
   project_manager: [
     Permissions.ViewProject,
@@ -40,8 +38,6 @@ export const UserRolePermissions = {
     Permissions.CreateSubtask,
     Permissions.UpdateSubtask,
     Permissions.DeleteSubtask,
-    Permissions.AddMember,
-    Permissions.RemoveMember,
   ],
   member: [
     Permissions.ViewProject,
