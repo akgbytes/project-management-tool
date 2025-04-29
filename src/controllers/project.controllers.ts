@@ -7,31 +7,41 @@ import { ProjectMember } from "../models/projectMember";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
 import { ApiResponse } from "../utils/ApiResponse";
+import { UserRole } from "../utils/permissions";
 
 const createProject = asyncHandler(async (req, res) => {
-  const { _id } = req.user;
+  const userId = req.user._id;
   const { name, description } = handleZodError(validateProjectData(req.body));
   const session = await mongoose.startSession();
   session.startTransaction();
-
   let project;
-
   try {
-    project = await Project.create({
-      name,
-      description,
-      createdBy: _id,
-    });
+    project = await Project.create(
+      [
+        {
+          name,
+          description,
+          createdBy: userId,
+        },
+      ],
+      { session }
+    );
 
-    await ProjectMember.create({
-      user: _id,
-      project: project._id,
-      role: "owner",
-    });
+    await ProjectMember.create(
+      [
+        {
+          user: userId,
+          project: project[0]._id,
+          role: UserRole.Owner,
+        },
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
   } catch (error) {
     await session.abortTransaction();
+    console.log(error);
     throw new CustomError(
       ResponseStatus.InternalServerError,
       "Some error occured while creating project"
@@ -45,7 +55,7 @@ const createProject = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         ResponseStatus.Success,
-        project,
+        project[0],
         "Project created successfully"
       )
     );

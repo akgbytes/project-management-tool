@@ -40,7 +40,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     );
   }
 
-  const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
+  const { unHashedToken, hashedToken, tokenExpiry } = user.generateToken();
 
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
@@ -277,7 +277,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 
-  const user = await User.findOne({ email: decodedToken.email });
+  const user = await User.findById(decodedToken._id);
   if (!user) {
     throw new CustomError(ResponseStatus.Unauthorized, "Invalid token");
   }

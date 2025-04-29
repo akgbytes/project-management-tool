@@ -16,7 +16,7 @@ export const Permissions = {
 } as const;
 
 export const UserRolePermissions = {
-  admin: [
+  owner: [
     Permissions.CreateProject,
     Permissions.DeleteProject,
     Permissions.UpdateProject,
@@ -51,12 +51,18 @@ export const UserRolePermissions = {
   ],
 };
 
-export type UserRole = keyof typeof UserRolePermissions;
+export const UserRole = {
+  Owner: "owner",
+  ProjectManager: "project_manager",
+  Member: "member",
+} as const;
+
+export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
 
 export type PermissionType = (typeof Permissions)[keyof typeof Permissions];
 
 export const hasPermission = (
-  role: UserRole,
+  role: UserRoleType,
   permission: PermissionType
 ): boolean => {
   return (UserRolePermissions[role] as PermissionType[]).includes(permission);

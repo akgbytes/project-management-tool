@@ -17,16 +17,13 @@ export const checkPermission = (permission: PermissionType) => {
     });
 
     if (!project) {
-      throw new CustomError(400, "");
+      throw new CustomError(ResponseStatus.BadRequest, "Access denied");
     }
 
     const userRole = project.role as UserRole;
 
     if (!hasPermission(userRole, permission)) {
-      throw new CustomError(
-        ResponseStatus.Forbidden,
-        "Insufficient permissions"
-      );
+      throw new CustomError(ResponseStatus.Forbidden, "Access denied");
     }
     next();
   };
