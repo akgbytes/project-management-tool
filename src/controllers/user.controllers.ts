@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
+import crypto from "crypto";
 import {
   validateLoginData,
   validateRegisterData,
@@ -80,8 +81,10 @@ const verifyUser = asyncHandler(async (req: Request, res: Response) => {
       "Verification token is required"
     );
 
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
   const user = await User.findOne({
-    emailVerificationToken: token,
+    emailVerificationToken: hashedToken,
     emailVerificationExpiry: { $gt: new Date() },
   });
 
@@ -93,8 +96,8 @@ const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   user.isEmailVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpiry = undefined;
+  user.emailVerificationToken = null;
+  user.emailVerificationExpiry = null;
 
   await user.save();
 
@@ -183,12 +186,10 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const logoutUser = asyncHandler(async (req: Request, res: Response) => {
-  const { _id } = req.body.user;
-
   await User.findByIdAndUpdate(
-    { _id },
+    { _id: req.user._id },
     {
-      refreshToken: undefined,
+      refreshToken: null,
     }
   );
 
@@ -248,8 +249,8 @@ const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   }
 
   user.password = password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiry = undefined;
+  user.resetPasswordToken = null;
+  user.resetPasswordExpiry = null;
   await user.save();
 
   res
@@ -288,10 +289,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 
-  let accessToken;
-  let refreshToken;
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
 
-  // Update token in DB
   user.refreshToken = refreshToken;
   await user.save();
 

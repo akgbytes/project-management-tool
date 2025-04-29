@@ -3,6 +3,7 @@ import { CustomError } from "../utils/CustomError";
 import jwt from "jsonwebtoken";
 import { ResponseStatus } from "../utils/constants";
 import { env } from "../configs/env";
+import { IUser } from "../models/user.models";
 
 const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   const { accessToken } = req.cookies;
@@ -11,7 +12,7 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
 
   try {
     const decoded = jwt.verify(accessToken, env.ACCESS_TOKEN_SECRET);
-    req.body.user = decoded;
+    req.user = decoded as IUser;
     next();
   } catch (error) {
     throw new CustomError(

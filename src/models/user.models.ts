@@ -18,11 +18,11 @@ export interface IUser extends Document {
   avatar: Avatar;
 
   isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  emailVerificationExpiry?: Date;
-  resetPasswordToken?: string;
-  resetPasswordExpiry?: Date;
-  refreshToken?: string;
+  emailVerificationToken: string | null;
+  emailVerificationExpiry: Date | null;
+  resetPasswordToken: string | null;
+  resetPasswordExpiry: Date | null;
+  refreshToken: string | null;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;

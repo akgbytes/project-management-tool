@@ -1,17 +1,8 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import { ProjectNote } from "../models/projectNote.models";
+import { ProjectNote } from "../models/note.models";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
-
-const getNotes = asyncHandler(async (req: Request, res: Response) => {
-  // get all notes
-  // project id & user id
-});
-
-const getNoteById = asyncHandler(async (req: Request, res: Response) => {
-  // get note by id
-});
 
 const createNote = asyncHandler(async (req: Request, res: Response) => {
   // create note
@@ -25,4 +16,12 @@ const deleteNote = asyncHandler(async (req: Request, res: Response) => {
   // delete note
 });
 
-export { createNote, deleteNote, getNoteById, getNotes, updateNote };
+const getNotes = asyncHandler(async (req: Request, res: Response) => {
+  // get all notes
+});
+
+const getNoteById = asyncHandler(async (req: Request, res: Response) => {
+  // get note by id
+});
+
+export { createNote, deleteNote, updateNote, getNotes, getNoteById };

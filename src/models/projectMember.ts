@@ -1,10 +1,10 @@
 import { model, Schema } from "mongoose";
-import { UserRole, UserRoleType } from "../utils/constants";
+import { UserRole, UserRolePermissions } from "../utils/permissions";
 
 export interface IProjectMember extends Document {
   user: Schema.Types.ObjectId;
   project: Schema.Types.ObjectId;
-  role: UserRoleType;
+  role: UserRole;
 }
 
 const projectMemberSchema = new Schema<IProjectMember>(
@@ -21,8 +21,8 @@ const projectMemberSchema = new Schema<IProjectMember>(
     },
     role: {
       type: String,
-      enum: Object.values(UserRole),
-      default: UserRole.MEMBER,
+      enum: Object.keys(UserRolePermissions),
+      default: "member",
     },
   },
   { timestamps: true }
