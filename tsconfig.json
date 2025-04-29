@@ -12,6 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "noEmitOnError": true
   },
-  "include": ["src/**/*", "test.js"],
+  "include": ["src/**/*", "types", "src/types.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

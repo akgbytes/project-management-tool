@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from "express";
 
 import { ProjectMember } from "../models/projectMember";
 import { CustomError } from "../utils/CustomError";
-import { hasPermission, PermissionType, UserRole } from "../utils/permissions";
+import {
+  hasPermission,
+  PermissionType,
+  UserRole,
+  UserRoleType,
+} from "../utils/permissions";
 import { ResponseStatus } from "../utils/constants";
 
 export const checkPermission = (permission: PermissionType) => {
@@ -20,7 +25,7 @@ export const checkPermission = (permission: PermissionType) => {
       throw new CustomError(ResponseStatus.BadRequest, "Access denied");
     }
 
-    const userRole = project.role as UserRole;
+    const userRole = project.role as UserRoleType;
 
     if (!hasPermission(userRole, permission)) {
       throw new CustomError(ResponseStatus.Forbidden, "Access denied");
