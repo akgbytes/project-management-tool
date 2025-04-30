@@ -1,9 +1,9 @@
-import { Project } from "./project.models";
 import { model, Schema } from "mongoose";
 
 export interface IProjectNote extends Document {
   createdBy: Schema.Types.ObjectId;
   project: Schema.Types.ObjectId;
+  title: string;
   content: string;
 }
 
@@ -19,6 +19,11 @@ const projectNoteSchema = new Schema<IProjectNote>(
       ref: "User",
       required: true,
     },
+    title: {
+      type: String,
+      required: true,
+    },
+
     content: {
       type: String,
       required: true,

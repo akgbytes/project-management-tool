@@ -9,12 +9,34 @@ import {
   getNotes,
   getNoteById,
 } from "../controllers/note.controllers";
+import { checkPermission } from "../middlewares/permissions.middlewares";
+import { Permissions } from "../utils/permissions";
 
 router.use(isLoggedIn);
-router.post("/create", createNote);
-router.delete("/delete", deleteNote);
-router.patch("/update", updateNote);
-router.get("/getAll", getNotes);
-router.get("/get/noteId", getNoteById);
+router.post(
+  "/create/project/:projectId",
+  checkPermission(Permissions.CreateNote),
+  createNote
+);
+router.delete(
+  "/delete/project/:projectId",
+  checkPermission(Permissions.DeleteNote),
+  deleteNote
+);
+router.patch(
+  "/update/:noteId/project/:projectId",
+  checkPermission(Permissions.UpdateNote),
+  updateNote
+);
+router.get(
+  "/getAll/project/:projectId",
+  checkPermission(Permissions.ViewNote),
+  getNotes
+);
+router.get(
+  "/get/:noteId/project/:projectId",
+  checkPermission(Permissions.ViewNote),
+  getNoteById
+);
 
 export default router;
