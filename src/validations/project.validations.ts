@@ -1,35 +1,38 @@
 import { z } from "zod";
-import { UserRole } from "../utils/permissions";
+import { UserRole } from "../utils/constants";
 
-const projectSchema = z.object({
-  name: z.string().nonempty(),
-  description: z.string().nonempty(),
+const createProjectSchema = z.object({
+  name: z.string().trim().nonempty("Project name is required"),
+  description: z.string().trim().nonempty("Project description is required"),
 });
 
-const projectMemberSchema = z.object({
-  role: z.enum([UserRole.Owner, UserRole.ProjectManager, UserRole.Member]),
+const addProjectMemberSchema = z.object({
+  role: z.enum([UserRole.ProjectManager, UserRole.Member], {
+    message: "Role must be either 'project_manager' or 'member'",
+  }),
+
   email: z.string().email({ message: "Invalid email address" }),
 });
-const removeMemberSchema = z.object({
+
+const removeProjectMemberSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
 });
 
-type projectData = z.infer<typeof projectSchema>;
-type projectMemberData = z.infer<typeof projectMemberSchema>;
-type removeProjectMemberData = z.infer<typeof removeMemberSchema>;
+const updateProjectSchema = createProjectSchema.partial();
 
-const validateProjectData = (project: projectData) => {
-  return projectSchema.safeParse(project);
-};
-const validateProjectMemberData = (member: projectMemberData) => {
-  return projectMemberSchema.safeParse(member);
-};
-const validateRemoveProjectMemberData = (member: removeProjectMemberData) => {
-  return removeMemberSchema.safeParse(member);
-};
+export type ProjectData = z.infer<typeof createProjectSchema>;
+export type ProjectMemberData = z.infer<typeof addProjectMemberSchema>;
+export type RemoveProjectMemberData = z.infer<typeof removeProjectMemberSchema>;
 
-export {
-  validateProjectData,
-  validateProjectMemberData,
-  validateRemoveProjectMemberData,
-};
+export const validateProjectData = (data: ProjectData) =>
+  createProjectSchema.safeParse(data);
+
+export const validateUpdateProjectData = (data: Partial<ProjectData>) =>
+  updateProjectSchema.safeParse(data);
+
+export const validateProjectMemberData = (data: ProjectMemberData) =>
+  addProjectMemberSchema.safeParse(data);
+
+export const validateRemoveProjectMemberData = (
+  data: RemoveProjectMemberData
+) => removeProjectMemberSchema.safeParse(data);

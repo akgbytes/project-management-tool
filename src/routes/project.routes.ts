@@ -17,32 +17,49 @@ import { checkPermission } from "../middlewares/permissions.middlewares";
 import { Permissions } from "../utils/permissions";
 
 router.use(isLoggedIn);
+
 router.post("/create", createProject);
+
 router.delete(
   "/delete/:projectId",
   checkPermission(Permissions.DeleteProject),
   deleteProject
 );
+
 router.patch(
   "/update/:projectId",
   checkPermission(Permissions.UpdateProject),
   updateProject
 );
+
 router.get("/getAll", getProjects);
-router.get("/get/:projectId", getProjectById);
+
+router.get(
+  "/get/:projectId",
+  checkPermission(Permissions.ViewProject),
+  getProjectById
+);
+
 router.post(
-  "/add-member/:projectId",
+  "/members/add/:projectId",
   checkPermission(Permissions.AddMember),
   addMemberToProject
 );
+
 router.delete(
-  "delete-member/:projectId",
+  "/members/remove/:projectId",
   checkPermission(Permissions.RemoveMember),
   removeMember
 );
-router.get("/get/members/:projectId", getProjectMembers);
+
+router.get(
+  "/members/:projectId",
+  checkPermission(Permissions.ViewMembers),
+  getProjectMembers
+);
+
 router.patch(
-  "/update/member-role/:projectId",
+  "/members/update-role/:projectId",
   checkPermission(Permissions.UpdateRole),
   updateMemberRole
 );

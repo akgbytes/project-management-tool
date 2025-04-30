@@ -16,3 +16,11 @@ export const ProjectStatus = {
 
 export type ProjectStatusType =
   (typeof ProjectStatus)[keyof typeof ProjectStatus];
+
+export const UserRole = {
+  Owner: "owner",
+  ProjectManager: "project_manager",
+  Member: "member",
+} as const;
+
+export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];

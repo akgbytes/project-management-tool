@@ -1,10 +1,5 @@
 import { model, Schema } from "mongoose";
-import {
-  UserRole,
-  UserRolePermissions,
-  UserRoleType,
-} from "../utils/permissions";
-
+import { UserRole, UserRoleType } from "../utils/constants";
 export interface IProjectMember extends Document {
   user: Schema.Types.ObjectId;
   project: Schema.Types.ObjectId;

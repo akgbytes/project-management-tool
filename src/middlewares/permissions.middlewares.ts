@@ -1,34 +1,48 @@
 import { Request, Response, NextFunction } from "express";
-
 import { ProjectMember } from "../models/projectMember";
 import { CustomError } from "../utils/CustomError";
 import {
   hasPermission,
+  PermissionDescriptions,
   PermissionType,
-  UserRoleType,
 } from "../utils/permissions";
-import { ResponseStatus } from "../utils/constants";
+import { ResponseStatus, UserRoleType } from "../utils/constants";
+import { asyncHandler } from "../utils/asyncHandler";
+import mongoose from "mongoose";
 
 export const checkPermission = (permission: PermissionType) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    // i need to check project id and find out user role in that
-    const userId = req.user._id;
-    const projectId = req.params.projectId;
+  return asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user._id;
+      const projectId = req.params.projectId;
 
-    const project = await ProjectMember.findOne({
-      _id: projectId,
-      user: userId,
-    });
+      // to avoid error when receiving something like 123 in projectId
+      if (!mongoose.Types.ObjectId.isValid(projectId)) {
+        throw new CustomError(ResponseStatus.BadRequest, "Invalid project ID");
+      }
 
-    if (!project) {
-      throw new CustomError(ResponseStatus.BadRequest, "Access denied");
+      const membership = await ProjectMember.findOne({
+        project: projectId,
+        user: userId,
+      });
+
+      if (!membership) {
+        throw new CustomError(
+          ResponseStatus.BadRequest,
+          "Project membership not found"
+        );
+      }
+
+      const userRole = membership.role as UserRoleType;
+
+      if (!hasPermission(userRole, permission)) {
+        throw new CustomError(
+          ResponseStatus.Forbidden,
+          PermissionDescriptions[permission] || "Access denied"
+        );
+      }
+
+      next();
     }
-
-    const userRole = project.role as UserRoleType;
-
-    if (!hasPermission(userRole, permission)) {
-      throw new CustomError(ResponseStatus.Forbidden, "Access denied");
-    }
-    next();
-  };
+  );
 };

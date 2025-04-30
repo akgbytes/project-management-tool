@@ -1,3 +1,5 @@
+import { UserRoleType } from "./constants";
+
 export const Permissions = {
   CreateProject: "create:project",
   DeleteProject: "delete:project",
@@ -11,10 +13,34 @@ export const Permissions = {
   DeleteSubtask: "delete:subtask",
   AddMember: "add:member",
   RemoveMember: "remove:member",
+  ViewMembers: "view:members",
   UpdateRole: "update:role",
 } as const;
 
-export const UserRolePermissions = {
+export const PermissionDescriptions: Record<PermissionType, string> = {
+  "create:project": "Only the project owner can create a project",
+  "delete:project": "Only the project owner can delete the project",
+  "update:project": "Only the project owner can update the project",
+  "view:project": "Only team members can view the project",
+
+  "create:task": "Only the owner or project manager can create tasks",
+  "update:task": "Only the owner or project manager can update tasks",
+  "delete:task": "Only the owner or project manager can delete tasks",
+
+  "create:subtask": "Only project members can create subtasks",
+  "update:subtask": "Only project members can update subtasks",
+  "delete:subtask": "Only project members can delete subtasks",
+
+  "add:member": "Only the owner can add members",
+  "remove:member": "Only the owner can remove members",
+  "view:members": "Only team members can view other team members",
+
+  "update:role": "Only the project owner can update member roles",
+};
+
+export type PermissionType = (typeof Permissions)[keyof typeof Permissions];
+
+export const UserRolePermissions: Record<UserRoleType, PermissionType[]> = {
   owner: [
     Permissions.CreateProject,
     Permissions.DeleteProject,
@@ -28,10 +54,12 @@ export const UserRolePermissions = {
     Permissions.DeleteSubtask,
     Permissions.AddMember,
     Permissions.RemoveMember,
+    Permissions.ViewMembers,
     Permissions.UpdateRole,
   ],
   project_manager: [
     Permissions.ViewProject,
+    Permissions.ViewMembers,
     Permissions.CreateTask,
     Permissions.UpdateTask,
     Permissions.DeleteTask,
@@ -41,25 +69,16 @@ export const UserRolePermissions = {
   ],
   member: [
     Permissions.ViewProject,
+    Permissions.ViewMembers,
     Permissions.CreateSubtask,
     Permissions.UpdateSubtask,
     Permissions.DeleteSubtask,
   ],
 };
 
-export const UserRole = {
-  Owner: "owner",
-  ProjectManager: "project_manager",
-  Member: "member",
-} as const;
-
-export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
-
-export type PermissionType = (typeof Permissions)[keyof typeof Permissions];
-
 export const hasPermission = (
   role: UserRoleType,
   permission: PermissionType
 ): boolean => {
-  return (UserRolePermissions[role] as PermissionType[]).includes(permission);
+  return UserRolePermissions[role].includes(permission);
 };
