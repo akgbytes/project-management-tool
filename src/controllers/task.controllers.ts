@@ -1,22 +1,34 @@
 import { Multer } from "multer";
 import { ProjectMember } from "../models/projectMember";
-import { Task } from "../models/task.models";
+import { Attachment, Task } from "../models/task.models";
 import { User } from "../models/user.models";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ResponseStatus } from "../utils/constants";
 import { CustomError } from "../utils/CustomError";
 import { handleZodError } from "../utils/handleZodError";
-import { validateTaskData } from "../validations/tast.validations";
+import {
+  validateTaskData,
+  validateUpdateTaskData,
+} from "../validations/tast.validations";
 import { uploadOnCloudinary } from "../configs/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
+import mongoose from "mongoose";
 
 // create task
 const createTask = asyncHandler(async (req, res) => {
-  const { title, description, email, status } = handleZodError(
+  const { title, description, email } = handleZodError(
     validateTaskData(req.body)
   );
   const { projectId } = req.params;
   const userId = req.user._id;
+
+  const existing = await Task.findOne({ title });
+  if (existing) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Task with same title already exists"
+    );
+  }
 
   const assignedToUser = await User.findOne({ email });
   if (!assignedToUser) {
@@ -44,7 +56,6 @@ const createTask = asyncHandler(async (req, res) => {
     assignedBy: userId,
     assignedTo: assignedToUser._id,
     project: projectId,
-    status,
   });
 
   if (!task) {
@@ -65,7 +76,8 @@ const createTask = asyncHandler(async (req, res) => {
     })
   );
 
-  console.log("attachments : ", attachments);
+  task.attachments = attachments as Attachment[];
+  await task.save();
 
   res
     .status(ResponseStatus.Success)
@@ -76,13 +88,83 @@ const createTask = asyncHandler(async (req, res) => {
 
 // update task
 const updateTask = asyncHandler(async (req, res) => {
-  // update task
+  const { title, description, email, status } = handleZodError(
+    validateUpdateTaskData(req.body)
+  );
+  const { projectId, taskId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  }
+
+  const existing = await Task.findOne({ title });
+  if (!existing) {
+    throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
+  }
+
+  const assignedToUser = await User.findOne({ email });
+  if (!assignedToUser) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "User with the given email does not exist"
+    );
+  }
+
+  const membership = await ProjectMember.findOne({
+    project: projectId,
+    user: assignedToUser._id,
+  });
+
+  if (!membership) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Project membership not found with the given email"
+    );
+  }
+
+  const updatePayload: Partial<{
+    title: string;
+    description: string;
+    assignedTo: string;
+    status: string;
+  }> = {};
+  if (title !== undefined) updatePayload.title = title;
+  if (description !== undefined) updatePayload.description = description;
+  if (email !== undefined)
+    updatePayload.assignedTo = assignedToUser._id as string;
+  if (status !== undefined) updatePayload.status = status;
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "At least one field is required to update"
+    );
+  }
+
+  const updatedTask = await Task.findByIdAndUpdate(taskId, updatePayload, {
+    new: true,
+  });
+
+  if (!updatedTask) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Error while updating task"
+    );
+  }
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        updatedTask,
+        "Task created successfully"
+      )
+    );
 });
 
 // delete task
-const deleteTask = asyncHandler(async (req, res) => {
-  // delete task
-});
+const deleteTask = asyncHandler(async (req, res) => {});
 const getTasks = asyncHandler(async (req, res) => {
   // get all tasks
 });

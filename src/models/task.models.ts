@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import { ProjectStatus, ProjectStatusType } from "../utils/constants";
 
-interface Attachment {
+export interface Attachment {
   url: string;
   mimetype: string;
   size: number;
@@ -23,6 +23,7 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
     description: {
       type: String,
