@@ -62,4 +62,4 @@ const taskSchema = new Schema<ITask>(
   { timestamps: true }
 );
 
-const Task = model("Task", taskSchema);
+export const Task = model("Task", taskSchema);

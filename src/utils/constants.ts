@@ -24,3 +24,12 @@ export const UserRole = {
 } as const;
 
 export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
+
+export const allowedMimeTypes = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "text/plain",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
