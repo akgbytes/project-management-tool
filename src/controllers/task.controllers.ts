@@ -171,14 +171,41 @@ const updateTask = asyncHandler(async (req, res) => {
 
 // delete task
 const deleteTask = asyncHandler(async (req, res) => {
-  // const { taskId } = req.params;
-  // if (!mongoose.Types.ObjectId.isValid(taskId)) {
-  //   throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
-  // }
-  // const existing = await Task.findOne({ title });
-  // if (!existing) {
-  //   throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
-  // }
+  const { taskId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  }
+  const existing = await Task.findById(taskId);
+  if (!existing) {
+    throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    await SubTask.deleteMany({ task: taskId });
+    await Task.findByIdAndDelete(taskId);
+
+    session.commitTransaction();
+    res
+      .status(ResponseStatus.Success)
+      .json(
+        new ApiResponse(
+          ResponseStatus.Success,
+          null,
+          "Task deleted successfully"
+        )
+      );
+  } catch (error: any) {
+    session.abortTransaction();
+    throw new CustomError(
+      ResponseStatus.InternalServerError,
+      `Error while deleting task: ${error.message}`
+    );
+  } finally {
+    session.endSession();
+  }
 });
 const getTasks = asyncHandler(async (req, res) => {
   // get all tasks
@@ -289,9 +316,27 @@ const updateSubTask = asyncHandler(async (req, res) => {
     );
 });
 
-// delete subtask
 const deleteSubTask = asyncHandler(async (req, res) => {
-  // delete subtask
+  const { subTaskId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(subTaskId)) {
+    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  }
+
+  const deletedSubTask = await SubTask.findByIdAndDelete(subTaskId);
+
+  if (!deletedSubTask) {
+    throw new CustomError(ResponseStatus.NotFound, "Subtask not found");
+  }
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Subtask deleted successfully"
+      )
+    );
 });
 
 export {
