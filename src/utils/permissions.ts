@@ -20,6 +20,8 @@ export const Permissions = {
   RemoveMember: "remove:member",
   ViewMembers: "view:members",
   UpdateRole: "update:role",
+  AddAttachments: "add:attachments",
+  RemoveAttachments: "remove:attachments",
 } as const;
 
 export const PermissionDescriptions: Record<PermissionType, string> = {
@@ -45,6 +47,9 @@ export const PermissionDescriptions: Record<PermissionType, string> = {
   "add:member": "Only the owner can add members",
   "remove:member": "Only the owner can remove members",
   "view:members": "Only team members can view other team members",
+
+  "add:attachments": "Only team members can add attachments",
+  "remove:attachments": "Only team members can remove attachments",
 
   "update:role": "Only the project owner can update member roles",
 };
@@ -72,6 +77,8 @@ export const UserRolePermissions: Record<UserRoleType, PermissionType[]> = {
     Permissions.RemoveMember,
     Permissions.ViewMembers,
     Permissions.UpdateRole,
+    Permissions.AddAttachments,
+    Permissions.RemoveAttachments,
   ],
   project_manager: [
     Permissions.ViewProject,
@@ -87,6 +94,8 @@ export const UserRolePermissions: Record<UserRoleType, PermissionType[]> = {
     Permissions.CreateSubtask,
     Permissions.UpdateSubtask,
     Permissions.DeleteSubtask,
+    Permissions.AddAttachments,
+    Permissions.RemoveAttachments,
   ],
   member: [
     Permissions.ViewProject,
@@ -99,6 +108,8 @@ export const UserRolePermissions: Record<UserRoleType, PermissionType[]> = {
     Permissions.CreateSubtask,
     Permissions.UpdateSubtask,
     Permissions.DeleteSubtask,
+    Permissions.AddAttachments,
+    Permissions.RemoveAttachments,
   ],
 };
 

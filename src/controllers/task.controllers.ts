@@ -15,7 +15,6 @@ import { uploadOnCloudinary } from "../configs/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
 import { SubTask } from "../models/subTask.models";
-import { partialUtil } from "zod/lib/helpers/partialUtil";
 
 // unique check fix
 const createTask = asyncHandler(async (req, res) => {
@@ -209,11 +208,64 @@ const deleteTask = asyncHandler(async (req, res) => {
 });
 const getTasks = asyncHandler(async (req, res) => {
   // get all tasks
+  const { projectId } = req.params;
+
+  const tasks = await Task.find({ project: projectId })
+    .populate({
+      path: "assignedTo",
+      select: "-_id fullName avatar",
+    })
+    .populate({
+      path: "assignedBy",
+      select: "-_id fullName avatar",
+    })
+    .select(
+      "title description assignedTo assignedBy status attachments updatedAt"
+    );
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        tasks,
+        tasks.length ? "Tasks fetched successfully" : "No tasks available"
+      )
+    );
 });
 
-// get task by id
 const getTaskById = asyncHandler(async (req, res) => {
-  // get task by id
+  const { taskId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  }
+
+  const task = await Task.findById(taskId)
+    .populate({
+      path: "assignedTo",
+      select: "-_id fullName avatar",
+    })
+    .populate({
+      path: "assignedBy",
+      select: "-_id fullName avatar",
+    })
+    .select(
+      "title description assignedTo assignedBy status attachments updatedAt"
+    );
+
+  if (!task) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Invalid task id, task does not exist"
+    );
+  }
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(ResponseStatus.Success, task, "Task fetched successfully")
+    );
 });
 
 const createSubTask = asyncHandler(async (req, res) => {
@@ -339,6 +391,59 @@ const deleteSubTask = asyncHandler(async (req, res) => {
     );
 });
 
+const addAttachments = asyncHandler(async (req, res) => {
+  const { taskId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  }
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    throw new CustomError(ResponseStatus.BadRequest, "Task does not exists");
+  }
+
+  if (task.attachments.length + (req.files?.length as number) > 5) {
+    throw new CustomError(ResponseStatus.BadRequest, "Max limit reached");
+  }
+
+  const newAttachments = await Promise.all(
+    (req.files as Express.Multer.File[]).map(async (file) => {
+      const result = await uploadOnCloudinary(file.path);
+      return {
+        url: result?.secure_url,
+        mimetype: file.mimetype,
+        size: file.size,
+      };
+    })
+  );
+
+  task.attachments.push(...(newAttachments as Attachment[]));
+  await task.save();
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        task.attachments,
+        "Attachments updated successfully"
+      )
+    );
+});
+const removeAttachments = asyncHandler(async (req, res) => {
+  // const { taskId, attachmentId } = req.params;
+  // if (!mongoose.Types.ObjectId.isValid(taskId)) {
+  //   throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  // }
+  // const task = await Task.findById(taskId);
+  // if (!task) {
+  //   throw new CustomError(ResponseStatus.BadRequest, "Task does not exists");
+  // }
+  // const something = task.attachments.find((a) => a._id === attachmentId);
+});
+
 export {
   createTask,
   deleteTask,
@@ -348,4 +453,6 @@ export {
   createSubTask,
   deleteSubTask,
   updateSubTask,
+  addAttachments,
+  removeAttachments,
 };

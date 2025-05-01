@@ -10,6 +10,8 @@ import {
   updateSubTask,
   getTasks,
   getTaskById,
+  addAttachments,
+  removeAttachments,
 } from "../controllers/task.controllers";
 import { isLoggedIn } from "../middlewares/auth.middlewares";
 import { checkPermission } from "../middlewares/permissions.middlewares";
@@ -24,12 +26,29 @@ router.post(
   uploadAttachments,
   createTask
 );
-router.delete("/delete/:taskId/project/:projectId", deleteTask);
-router.patch("/update/:taskId/project/:projectId", updateTask);
-router.get("/getAll/project/:projectId", getTasks);
-router.get("/get/:taskId/project/:projectId", getTaskById);
+router.delete(
+  "/delete/:taskId/project/:projectId",
+  checkPermission(Permissions.DeleteTask),
+  deleteTask
+);
+router.patch(
+  "/update/:taskId/project/:projectId",
+  checkPermission(Permissions.UpdateTask),
+  updateTask
+);
 
-// later
+router.get(
+  "/getAll/project/:projectId",
+  checkPermission(Permissions.ViewTask),
+  getTasks
+);
+
+router.get(
+  "/get/:taskId/project/:projectId",
+  checkPermission(Permissions.ViewTask),
+  getTaskById
+);
+
 router.post(
   "/subtask/create/task/:taskId/project/:projectId",
   checkPermission(Permissions.CreateSubtask),
@@ -46,6 +65,17 @@ router.patch(
   "/subtask/update/:subTaskId/project/:projectId",
   checkPermission(Permissions.UpdateSubtask),
   updateSubTask
+);
+
+router.post(
+  "/:taskId/project/:projectId/add/attachments",
+  uploadAttachments,
+  addAttachments
+);
+router.delete(
+  "/:taskId/project/:projectId/remove/attachments/:attachmentId",
+  uploadAttachments,
+  removeAttachments
 );
 
 export default router;
