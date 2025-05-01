@@ -1,4 +1,3 @@
-import { Multer } from "multer";
 import { ProjectMember } from "../models/projectMember";
 import { Attachment, Task } from "../models/task.models";
 import { User } from "../models/user.models";
@@ -15,6 +14,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
 
 // create task
+// unique check fix
 const createTask = asyncHandler(async (req, res) => {
   const { title, description, email } = handleZodError(
     validateTaskData(req.body)
@@ -164,7 +164,16 @@ const updateTask = asyncHandler(async (req, res) => {
 });
 
 // delete task
-const deleteTask = asyncHandler(async (req, res) => {});
+const deleteTask = asyncHandler(async (req, res) => {
+  // const { taskId } = req.params;
+  // if (!mongoose.Types.ObjectId.isValid(taskId)) {
+  //   throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
+  // }
+  // const existing = await Task.findOne({ title });
+  // if (!existing) {
+  //   throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
+  // }
+});
 const getTasks = asyncHandler(async (req, res) => {
   // get all tasks
 });

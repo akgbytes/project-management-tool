@@ -52,6 +52,12 @@ const createProject = asyncHandler(async (req, res) => {
       );
   } catch (error: any) {
     await session.abortTransaction();
+    if (error.code === 11000) {
+      throw new CustomError(
+        ResponseStatus.Conflict,
+        "Project name must be unique per user"
+      );
+    }
     throw new CustomError(
       ResponseStatus.InternalServerError,
       `Error while creating project: ${error.message}`
@@ -189,17 +195,15 @@ const getProjects = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (!projects.length) {
-    throw new CustomError(ResponseStatus.NotFound, "No projects found");
-  }
-
   res
     .status(ResponseStatus.Success)
     .json(
       new ApiResponse(
         ResponseStatus.Success,
         projects,
-        "Projects fetched successfully"
+        projects.length
+          ? "Projects fetched successfully"
+          : "No projects available"
       )
     );
 });

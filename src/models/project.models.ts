@@ -11,7 +11,6 @@ const projectSchema = new Schema<IProject>(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     description: {
@@ -25,5 +24,8 @@ const projectSchema = new Schema<IProject>(
   },
   { timestamps: true }
 );
+
+// unique project name per user
+projectSchema.index({ name: 1, createdBy: 1 }, { unique: true });
 
 export const Project = model("Project", projectSchema);

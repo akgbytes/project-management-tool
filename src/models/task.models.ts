@@ -23,7 +23,6 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
       trim: true,
-      unique: true,
     },
     description: {
       type: String,

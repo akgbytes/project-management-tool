@@ -19,7 +19,7 @@ router.post(
   createNote
 );
 router.delete(
-  "/delete/project/:projectId",
+  "/delete/:noteId/project/:projectId",
   checkPermission(Permissions.DeleteNote),
   deleteNote
 );

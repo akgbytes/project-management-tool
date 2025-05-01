@@ -13,11 +13,20 @@ import mongoose from "mongoose";
 
 const createNote = asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const { content } = handleZodError(validateNoteData(req.body));
+  const { content, title } = handleZodError(validateNoteData(req.body));
   const userId = req.user._id;
+
+  const existing = await ProjectNote.findOne({ title, project: projectId });
+  if (existing) {
+    throw new CustomError(
+      ResponseStatus.Conflict,
+      `A note with the title "${title}" already exists in this project`
+    );
+  }
 
   const note = await ProjectNote.create({
     project: projectId,
+    title,
     content,
     createdBy: userId,
   });
@@ -42,28 +51,34 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
 
 const updateNote = asyncHandler(async (req: Request, res: Response) => {
   const { noteId } = req.params;
+
   if (!mongoose.Types.ObjectId.isValid(noteId)) {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
   }
-  const { title, content } = handleZodError(validateUpdateNoteData(req.body));
 
+  const { title, content } = handleZodError(validateUpdateNoteData(req.body));
   const updatePayload: Partial<{ title: string; content: string }> = {};
 
   if (title !== undefined) updatePayload.title = title;
   if (content !== undefined) updatePayload.content = content;
 
+  if (Object.keys(updatePayload).length === 0) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "At least one field (title or content) must be provided to update"
+    );
+  }
+
   const updatedNote = await ProjectNote.findByIdAndUpdate(
-    {
-      noteId,
-    },
+    noteId,
     updatePayload,
     { new: true }
-  );
+  ).select("title content updatedAt");
 
   if (!updatedNote) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Error while updating the note"
+      "Note not found or update failed"
     );
   }
 
@@ -85,13 +100,18 @@ const deleteNote = asyncHandler(async (req: Request, res: Response) => {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
   }
 
-  await ProjectNote.findByIdAndDelete(noteId);
+  const deletedNote = await ProjectNote.findByIdAndDelete(noteId);
+
+  if (!deletedNote) {
+    throw new CustomError(ResponseStatus.NotFound, "Note not found");
+  }
+
   res
     .status(ResponseStatus.Success)
     .json(
       new ApiResponse(
         ResponseStatus.Success,
-        {},
+        null,
         "Project note deleted successfully"
       )
     );
@@ -117,20 +137,15 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
       $project: {
         title: 1,
         content: 1,
-        username: "$createdByUser.username",
-        email: "$createdByUser.email",
-        fullName: "$createdByUser.fullName",
-        avatar: "$createdByUser.avatar",
+        createdBy: {
+          username: "$createdByUser.username",
+          email: "$createdByUser.email",
+          fullName: "$createdByUser.fullName",
+          avatar: "$createdByUser.avatar",
+        },
       },
     },
   ]);
-
-  if (!notes.length) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "No project notes are available"
-    );
-  }
 
   res
     .status(ResponseStatus.Success)
@@ -138,7 +153,9 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
       new ApiResponse(
         ResponseStatus.Success,
         notes,
-        "Project notes fetched successfully"
+        notes.length
+          ? "Project notes fetched successfully"
+          : "No project notes available"
       )
     );
 });
@@ -146,16 +163,18 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
 const getNoteById = asyncHandler(async (req: Request, res: Response) => {
   const { noteId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(noteId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
-  }
+  // if (!mongoose.Types.ObjectId.isValid(noteId)) {
+  //   throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
+  // }
 
-  const note = await ProjectNote.findById(noteId).populate({
-    path: "createdBy",
-    select: "username email fullName avatar",
-  });
+  const note = await ProjectNote.findById(noteId)
+    .populate({
+      path: "createdBy",
+      select: "fullName avatar -_id",
+    })
+    .select("title content createdBy");
   if (!note) {
-    throw new CustomError(ResponseStatus.BadRequest, "Note does note exist");
+    throw new CustomError(ResponseStatus.NotFound, "Note does not exist");
   }
 
   res
