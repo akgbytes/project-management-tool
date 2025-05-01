@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ProjectMember } from "../models/projectMember";
+import { ProjectMember } from "../models/projectMember.models";
 import { CustomError } from "../utils/CustomError";
 import {
   hasPermission,

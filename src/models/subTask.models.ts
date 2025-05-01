@@ -19,6 +19,12 @@ const subTaskSchema = new Schema(
       ref: "Task",
       required: true,
     },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: true,
+    },
+
     isCompleted: {
       type: Boolean,
       default: false,
@@ -31,5 +37,7 @@ const subTaskSchema = new Schema(
   },
   { timestamps: true }
 );
+
+subTaskSchema.index({ project: 1, task: 1, title: 1 }, { unique: true });
 
 export const SubTask = model("SubTask", subTaskSchema);

@@ -8,7 +8,7 @@ import {
   validateUpdateProjectData,
 } from "../validations/project.validations";
 import { Project } from "../models/project.models";
-import { ProjectMember } from "../models/projectMember";
+import { ProjectMember } from "../models/projectMember.models";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
 import { ApiResponse } from "../utils/ApiResponse";

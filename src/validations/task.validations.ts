@@ -18,9 +18,27 @@ const updateTaskSchema = taskSchema
   })
   .partial();
 
+const subTaskSchema = z.object({
+  title: z.string().trim().nonempty("Subtask title is required"),
+});
+
+const updateSubTaskSchema = taskSchema
+  .extend({
+    isCompleted: z.boolean(),
+  })
+  .partial();
+
 export type TaskData = z.infer<typeof taskSchema>;
 export type UpdateTaskData = z.infer<typeof updateTaskSchema>;
+export type SubTaskData = z.infer<typeof subTaskSchema>;
+export type UpdateSubTaskData = z.infer<typeof updateSubTaskSchema>;
 
 export const validateTaskData = (data: TaskData) => taskSchema.safeParse(data);
 export const validateUpdateTaskData = (data: TaskData) =>
   updateTaskSchema.safeParse(data);
+
+export const validateSubTaskData = (data: SubTaskData) =>
+  subTaskSchema.safeParse(data);
+
+export const validateUpdateSubTaskData = (data: UpdateSubTaskData) =>
+  updateSubTaskSchema.safeParse(data);

@@ -30,8 +30,22 @@ router.get("/getAll/project/:projectId", getTasks);
 router.get("/get/:taskId/project/:projectId", getTaskById);
 
 // later
-router.post("/subtask/create", createSubTask);
-router.delete("/subtask/delete", deleteSubTask);
-router.patch("/subtask/update", updateSubTask);
+router.post(
+  "/subtask/create/task/:taskId/project/:projectId",
+  checkPermission(Permissions.CreateSubtask),
+  createSubTask
+);
+
+router.delete(
+  "/subtask/delete/:subTaskId/project/:projectId",
+  checkPermission(Permissions.DeleteSubtask),
+  deleteSubTask
+);
+
+router.patch(
+  "/subtask/update/:subTaskId/project/:projectId",
+  checkPermission(Permissions.UpdateSubtask),
+  updateSubTask
+);
 
 export default router;
