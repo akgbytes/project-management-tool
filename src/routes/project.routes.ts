@@ -54,15 +54,15 @@ router.delete(
 );
 
 // Project Members
-router.post(
-  "/:pid/members/add",
-  checkPermission(Permissions.AddMember),
-  addMemberToProject
-);
 router.get(
   "/:pid/members",
   checkPermission(Permissions.ViewMembers),
   getProjectMembers
+);
+router.post(
+  "/:pid/members/add",
+  checkPermission(Permissions.AddMember),
+  addMemberToProject
 );
 router.delete(
   "/:pid/members/:mid/remove",

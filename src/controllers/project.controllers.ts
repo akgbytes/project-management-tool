@@ -33,7 +33,7 @@ const createProject = asyncHandler(async (req, res) => {
     await ProjectMember.create(
       [
         {
-          user: userId,
+          user: newProject.createdBy,
           project: newProject._id,
           role: UserRole.Owner,
         },
@@ -341,9 +341,12 @@ const addMemberToProject = asyncHandler(async (req, res) => {
   const { role, email } = handleZodError(validateProjectMemberData(req.body));
   const { pid } = req.params;
 
-  const userToAdd = await User.findOne({ email });
+  const userToAdd = await User.findOne({ email, isEmailVerified: true });
   if (!userToAdd) {
-    throw new CustomError(ResponseStatus.NotFound, "User does not exist");
+    throw new CustomError(
+      ResponseStatus.NotFound,
+      "Either user does not exist or not verified yet"
+    );
   }
 
   const isAlreadyMember = await ProjectMember.findOne({

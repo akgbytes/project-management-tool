@@ -15,9 +15,6 @@ export const checkPermission = (permission: PermissionType) => {
     const userId = req.user._id;
     const { pid } = req.params;
 
-    logger.info(pid);
-    logger.info(userId);
-
     validateObjectId(pid, "Project");
 
     const membership = await ProjectMember.findOne({

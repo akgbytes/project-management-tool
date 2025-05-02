@@ -7,11 +7,10 @@ const createProjectSchema = z.object({
 });
 
 const addProjectMemberSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
   role: z.enum([UserRole.ProjectManager, UserRole.Member], {
     message: "Role must be either 'project_manager' or 'member'",
   }),
-
-  email: z.string().email({ message: "Invalid email address" }),
 });
 
 const updateMemberRoleSchema = addProjectMemberSchema.pick({ role: true });
