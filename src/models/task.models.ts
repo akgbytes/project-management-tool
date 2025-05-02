@@ -59,7 +59,7 @@ const taskSchema = new Schema<ITask>(
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 taskSchema.index({ title: 1, project: 1 }, { unique: true });

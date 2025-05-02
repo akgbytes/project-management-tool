@@ -25,7 +25,7 @@ export const checkPermission = (permission: PermissionType) => {
     if (!membership) {
       throw new CustomError(
         ResponseStatus.BadRequest,
-        "Project membership not found"
+        "Project membership not found",
       );
     }
 
@@ -34,7 +34,7 @@ export const checkPermission = (permission: PermissionType) => {
     if (!hasPermission(userRole, permission)) {
       throw new CustomError(
         ResponseStatus.Forbidden,
-        PermissionDescriptions[permission] || "Access denied"
+        PermissionDescriptions[permission] || "Access denied",
       );
     }
 

@@ -28,7 +28,7 @@ const projectNoteSchema = new Schema<IProjectNote>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const ProjectNote = model("ProjectNote", projectNoteSchema);

@@ -27,7 +27,7 @@ const createProject = asyncHandler(async (req, res) => {
   try {
     const [newProject] = await Project.create(
       [{ name, description, createdBy: userId }],
-      { session }
+      { session },
     );
 
     await ProjectMember.create(
@@ -38,13 +38,13 @@ const createProject = asyncHandler(async (req, res) => {
           role: UserRole.Owner,
         },
       ],
-      { session }
+      { session },
     );
 
     await session.commitTransaction();
 
     logger.info(
-      `Project with name: ${name} created successfully by user ${userId}`
+      `Project with name: ${name} created successfully by user ${userId}`,
     );
 
     res
@@ -53,20 +53,20 @@ const createProject = asyncHandler(async (req, res) => {
         new ApiResponse(
           ResponseStatus.Success,
           newProject,
-          "Project created successfully"
-        )
+          "Project created successfully",
+        ),
       );
   } catch (error: any) {
     await session.abortTransaction();
     if (error.code === 11000) {
       throw new CustomError(
         ResponseStatus.Conflict,
-        "Project name must be unique per user"
+        "Project name must be unique per user",
       );
     }
     throw new CustomError(
       ResponseStatus.InternalServerError,
-      `Error while creating project: ${error.message}`
+      `Error while creating project: ${error.message}`,
     );
   } finally {
     session.endSession();
@@ -91,7 +91,7 @@ const deleteProject = asyncHandler(async (req, res) => {
     await session.commitTransaction();
 
     logger.info(
-      `Project with ID: ${pid} successfully deleted by user ${userId}`
+      `Project with ID: ${pid} successfully deleted by user ${userId}`,
     );
 
     res
@@ -100,14 +100,14 @@ const deleteProject = asyncHandler(async (req, res) => {
         new ApiResponse(
           ResponseStatus.Success,
           null,
-          "Project deleted successfully"
-        )
+          "Project deleted successfully",
+        ),
       );
   } catch (error: any) {
     await session.abortTransaction();
     throw new CustomError(
       ResponseStatus.InternalServerError,
-      `Error while deleting project: ${error.message}`
+      `Error while deleting project: ${error.message}`,
     );
   } finally {
     session.endSession();
@@ -116,7 +116,7 @@ const deleteProject = asyncHandler(async (req, res) => {
 
 const updateProject = asyncHandler(async (req, res) => {
   const { name, description } = handleZodError(
-    validateUpdateProjectData(req.body)
+    validateUpdateProjectData(req.body),
   );
   const { pid } = req.params;
   const userId = req.user._id;
@@ -128,7 +128,7 @@ const updateProject = asyncHandler(async (req, res) => {
   if (Object.keys(updatePayload).length === 0) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "At least one field (name or description) is required to update"
+      "At least one field (name or description) is required to update",
     );
   }
 
@@ -148,8 +148,8 @@ const updateProject = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         updatedProject,
-        "Project updated successfully"
-      )
+        "Project updated successfully",
+      ),
     );
 });
 
@@ -213,8 +213,8 @@ const getProjects = asyncHandler(async (req, res) => {
         projects,
         projects.length
           ? "Projects fetched successfully"
-          : "No projects available"
-      )
+          : "No projects available",
+      ),
     );
 });
 
@@ -323,7 +323,7 @@ const getProjectById = asyncHandler(async (req, res) => {
   ]);
 
   logger.info(
-    `Project with ID: ${pid} successfully fetched for user ${userId}`
+    `Project with ID: ${pid} successfully fetched for user ${userId}`,
   );
 
   res
@@ -332,8 +332,8 @@ const getProjectById = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         project[0],
-        "Project fetched successfully"
-      )
+        "Project fetched successfully",
+      ),
     );
 });
 
@@ -345,7 +345,7 @@ const addMemberToProject = asyncHandler(async (req, res) => {
   if (!userToAdd) {
     throw new CustomError(
       ResponseStatus.NotFound,
-      "Either user does not exist or not verified yet"
+      "Either user does not exist or not verified yet",
     );
   }
 
@@ -357,7 +357,7 @@ const addMemberToProject = asyncHandler(async (req, res) => {
   if (isAlreadyMember) {
     throw new CustomError(
       ResponseStatus.Conflict,
-      "User is already a member of this project"
+      "User is already a member of this project",
     );
   }
 
@@ -378,8 +378,8 @@ const addMemberToProject = asyncHandler(async (req, res) => {
         email: userToAdd.email,
         role,
       },
-      "Member added successfully"
-    )
+      "Member added successfully",
+    ),
   );
 });
 
@@ -400,8 +400,8 @@ const removeMember = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "Member removed successfully"
-      )
+        "Member removed successfully",
+      ),
     );
 });
 
@@ -432,8 +432,8 @@ const getProjectMembers = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         formattedMembers,
-        "Project members fetched successfully"
-      )
+        "Project members fetched successfully",
+      ),
     );
 });
 
@@ -448,7 +448,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
   if (!projectMember) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Project member not found"
+      "Project member not found",
     );
   }
 
@@ -459,8 +459,8 @@ const updateMemberRole = asyncHandler(async (req, res) => {
         new ApiResponse(
           ResponseStatus.Success,
           null,
-          "Role is already up to date"
-        )
+          "Role is already up to date",
+        ),
       );
   }
 
@@ -472,7 +472,11 @@ const updateMemberRole = asyncHandler(async (req, res) => {
   res
     .status(ResponseStatus.Success)
     .json(
-      new ApiResponse(ResponseStatus.Success, null, "Role updated successfully")
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Role updated successfully",
+      ),
     );
 });
 

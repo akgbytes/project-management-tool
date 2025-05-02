@@ -15,7 +15,7 @@ const mailGenerator = new Mailgen({
 const sendMail = async (
   email: string,
   subject: string,
-  content: Mailgen.Content
+  content: Mailgen.Content,
 ) => {
   const transporter = nodemailer.createTransport({
     host: env.MAILTRAP_HOST,
@@ -41,7 +41,7 @@ const sendMail = async (
   } catch (err) {
     throw new CustomError(
       ResponseStatus.InternalServerError,
-      `Failed to send "${subject}" email.`
+      `Failed to send "${subject}" email.`,
     );
   }
 };
@@ -91,28 +91,28 @@ const resetPasswordMailContent = (fullName: string, link: string) => {
 const sendVerificationMail = async (
   fullName: string,
   email: string,
-  token: string
+  token: string,
 ) => {
   const link = `${env.SERVER_URL}/api/v1/users/auth/verify/${token}`;
 
   await sendMail(
     email,
     "Verify Your Email",
-    emailVerificationMailContent(fullName, link)
+    emailVerificationMailContent(fullName, link),
   );
 };
 
 const sendResetPasswordMail = async (
   fullName: string,
   email: string,
-  token: string
+  token: string,
 ) => {
   const link = `${env.SERVER_URL}/api/v1/users/auth/password/reset/${token}`;
 
   await sendMail(
     email,
     "Reset Your Password",
-    resetPasswordMailContent(fullName, link)
+    resetPasswordMailContent(fullName, link),
   );
 };
 

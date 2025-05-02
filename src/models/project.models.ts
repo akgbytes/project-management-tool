@@ -22,7 +22,7 @@ const projectSchema = new Schema<IProject>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 projectSchema.index({ name: 1, createdBy: 1 }, { unique: true });

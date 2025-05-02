@@ -17,7 +17,7 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   } catch (error) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Invalid or expired access token"
+      "Invalid or expired access token",
     );
   }
 };

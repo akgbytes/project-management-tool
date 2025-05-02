@@ -6,7 +6,7 @@ export const validateObjectId = (id: string, entityName: string): void => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      `Invalid ${entityName} ID`
+      `Invalid ${entityName} ID`,
     );
   }
 };

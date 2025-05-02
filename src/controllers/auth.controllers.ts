@@ -20,7 +20,7 @@ import logger from "../utils/logger";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, password, username, fullName } = handleZodError(
-    validateRegisterData(req.body)
+    validateRegisterData(req.body),
   );
 
   logger.info("Register attempt", { email });
@@ -65,8 +65,8 @@ const registerUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         user.toJSON(),
-        "User registered successfully. Please verify your email"
-      )
+        "User registered successfully. Please verify your email",
+      ),
     );
 });
 
@@ -76,7 +76,7 @@ const verifyUser = asyncHandler(async (req, res) => {
   if (!token)
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Verification token is required"
+      "Verification token is required",
     );
 
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -89,7 +89,7 @@ const verifyUser = asyncHandler(async (req, res) => {
   if (!user) {
     throw new CustomError(
       ResponseStatus.Unauthorized,
-      "Invalid or expired token"
+      "Invalid or expired token",
     );
   }
 
@@ -106,8 +106,8 @@ const verifyUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "Email verified successfully"
-      )
+        "Email verified successfully",
+      ),
     );
 });
 
@@ -117,7 +117,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
   if (!email) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Email address is required to send verification link."
+      "Email address is required to send verification link.",
     );
   }
 
@@ -126,14 +126,14 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
   if (!user) {
     throw new CustomError(
       ResponseStatus.Unauthorized,
-      "No account found with this email address."
+      "No account found with this email address.",
     );
   }
 
   if (user.isEmailVerified) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Email is already verified"
+      "Email is already verified",
     );
   }
 
@@ -155,8 +155,8 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "Verification mail sent successfully. Please check your inbox"
-      )
+        "Verification mail sent successfully. Please check your inbox",
+      ),
     );
 });
 
@@ -214,7 +214,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken")
     .clearCookie("refreshToken")
     .json(
-      new ApiResponse(ResponseStatus.Success, null, "Logged out successfully")
+      new ApiResponse(ResponseStatus.Success, null, "Logged out successfully"),
     );
 });
 
@@ -230,8 +230,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
         new ApiResponse(
           ResponseStatus.Success,
           null,
-          "If an account exists, a reset link has been sent to the email"
-        )
+          "If an account exists, a reset link has been sent to the email",
+        ),
       );
   }
 
@@ -253,8 +253,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "If an account exists, a reset link has been sent to the email"
-      )
+        "If an account exists, a reset link has been sent to the email",
+      ),
     );
 });
 
@@ -276,7 +276,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!user) {
     throw new CustomError(
       ResponseStatus.Unauthorized,
-      "Token is invalid or expired"
+      "Token is invalid or expired",
     );
   }
 
@@ -293,8 +293,8 @@ const resetPassword = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "Password reset successfully"
-      )
+        "Password reset successfully",
+      ),
     );
 });
 
@@ -311,7 +311,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   } catch (error) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "Invalid or expired refresh token"
+      "Invalid or expired refresh token",
     );
   }
 
@@ -323,7 +323,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   if (user.refreshToken !== incomingRefreshToken) {
     throw new CustomError(
       ResponseStatus.Forbidden,
-      "Refresh token has been used or is invalid"
+      "Refresh token has been used or is invalid",
     );
   }
 
@@ -364,8 +364,8 @@ const getMe = asyncHandler(async (req, res) => {
       new ApiResponse(
         ResponseStatus.Success,
         user.toJSON(),
-        "User profile fetched successfully"
-      )
+        "User profile fetched successfully",
+      ),
     );
 });
 

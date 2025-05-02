@@ -35,9 +35,9 @@ const subTaskSchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-subTaskSchema.index({ project: 1, task: 1, title: 1 }, { unique: true });
+subTaskSchema.index({ title: 1, task: 1, project: 1 }, { unique: true });
 
 export const SubTask = model("SubTask", subTaskSchema);

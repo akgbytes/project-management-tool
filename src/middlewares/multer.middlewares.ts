@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import { allowedMimeTypes, ResponseStatus } from "../utils/constants";
 import { CustomError } from "../utils/CustomError";
+import { env } from "../configs/env";
 
 const storage = multer.diskStorage({
   destination: function (req, res, cb) {
@@ -39,4 +40,4 @@ export const uploadAttachments = multer({
   limits: {
     fileSize: 10 * 1000 * 1000,
   },
-}).array("attachments", 5);
+}).array("attachments", env.MAX_ATTACHMENTS);

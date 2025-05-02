@@ -7,7 +7,7 @@ const errorHandler = (
   error: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   let customError: CustomError;
 
@@ -19,7 +19,7 @@ const errorHandler = (
   } else {
     customError = new CustomError(
       ResponseStatus.InternalServerError,
-      error.message || "Internal Server Error"
+      error.message || "Internal Server Error",
     );
   }
 

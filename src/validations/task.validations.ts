@@ -13,7 +13,7 @@ const updateTaskSchema = taskSchema
       [ProjectStatus.PLANNING, ProjectStatus.ONGOING, ProjectStatus.COMPLETED],
       {
         message: "Status must be either 'planning' or 'ongoing' or 'completed'",
-      }
+      },
     ),
   })
   .partial();

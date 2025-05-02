@@ -73,7 +73,7 @@ const userSchema = new Schema<IUser>(
 
     refreshToken: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {
@@ -107,7 +107,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
     },
     env.ACCESS_TOKEN_SECRET,
-    { expiresIn: env.ACCESS_TOKEN_EXPIRY as StringValue }
+    { expiresIn: env.ACCESS_TOKEN_EXPIRY as StringValue },
   );
 };
 
@@ -117,7 +117,7 @@ userSchema.methods.generateRefreshToken = function () {
       _id: this._id,
     },
     env.REFRESH_TOKEN_SECRET,
-    { expiresIn: env.REFRESH_TOKEN_EXPIRY as StringValue }
+    { expiresIn: env.REFRESH_TOKEN_EXPIRY as StringValue },
   );
 };
 

@@ -24,7 +24,7 @@ const projectMemberSchema = new Schema<IProjectMember>(
       default: UserRole.Member,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const ProjectMember = model("ProjectMember", projectMemberSchema);

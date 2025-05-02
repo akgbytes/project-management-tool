@@ -22,7 +22,7 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
   if (existing) {
     throw new CustomError(
       ResponseStatus.Conflict,
-      `A note with the title '${title}' already exists in this project`
+      `A note with the title '${title}' already exists in this project`,
     );
   }
 
@@ -41,8 +41,8 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
       new ApiResponse(
         ResponseStatus.Success,
         note,
-        "Project note created successfully"
-      )
+        "Project note created successfully",
+      ),
     );
 });
 
@@ -60,7 +60,7 @@ const updateNote = asyncHandler(async (req: Request, res: Response) => {
   if (Object.keys(updatePayload).length === 0) {
     throw new CustomError(
       ResponseStatus.BadRequest,
-      "At least one field (title or content) must be provided to update"
+      "At least one field (title or content) must be provided to update",
     );
   }
 
@@ -80,8 +80,8 @@ const updateNote = asyncHandler(async (req: Request, res: Response) => {
       new ApiResponse(
         ResponseStatus.Success,
         updatedNote,
-        "Project note updated successfully"
-      )
+        "Project note updated successfully",
+      ),
     );
 });
 
@@ -104,8 +104,8 @@ const deleteNote = asyncHandler(async (req: Request, res: Response) => {
       new ApiResponse(
         ResponseStatus.Success,
         null,
-        "Project note deleted successfully"
-      )
+        "Project note deleted successfully",
+      ),
     );
 });
 
@@ -140,7 +140,7 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
   ]);
 
   logger.info(
-    `Fetched ${notes.length} note(s) for project ${pid} by user ${req.user._id}`
+    `Fetched ${notes.length} note(s) for project ${pid} by user ${req.user._id}`,
   );
 
   res
@@ -151,8 +151,8 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
         notes,
         notes.length
           ? "Project notes fetched successfully"
-          : "No project notes available"
-      )
+          : "No project notes available",
+      ),
     );
 });
 
@@ -180,8 +180,8 @@ const getNoteById = asyncHandler(async (req: Request, res: Response) => {
       new ApiResponse(
         ResponseStatus.Success,
         note,
-        "Project note fetched successfully"
-      )
+        "Project note fetched successfully",
+      ),
     );
 });
 
