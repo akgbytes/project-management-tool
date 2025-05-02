@@ -12,6 +12,7 @@
 - **Centralized Error Handling**
 - **Mongoose Aggregation Pipelines**
 - **Winston Logging Integration**
+- **Rate Limiting for Sensitive Endpoints** (e.g., password reset, email verification)
 
 ## Technologies Used
 
@@ -24,6 +25,7 @@
 - **File Uploads:** Multer + Cloudinary
 - **Mailing:** Nodemailer + Mailgen
 - **Logging:** Winston
+- **Security:** express-rate-limit for API throttling
 
 ## Installation
 
@@ -88,4 +90,4 @@ Pull requests are welcome! Feel free to fork the repo and submit a PR.
 
 ## License
 
-This project is open-source and available under the **ISC License**.
+This project is open-source and available under the **MIT License**.
