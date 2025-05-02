@@ -34,7 +34,7 @@ export type SubTaskData = z.infer<typeof subTaskSchema>;
 export type UpdateSubTaskData = z.infer<typeof updateSubTaskSchema>;
 
 export const validateTaskData = (data: TaskData) => taskSchema.safeParse(data);
-export const validateUpdateTaskData = (data: TaskData) =>
+export const validateUpdateTaskData = (data: UpdateTaskData) =>
   updateTaskSchema.safeParse(data);
 
 export const validateSubTaskData = (data: SubTaskData) =>

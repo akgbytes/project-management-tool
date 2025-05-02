@@ -15,23 +15,16 @@ import { uploadOnCloudinary } from "../configs/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
 import { SubTask } from "../models/subTask.models";
+import logger from "../utils/logger";
+import { validateObjectId } from "../utils/helper";
 
-// unique check fix
 const createTask = asyncHandler(async (req, res) => {
   const { title, description, email } = handleZodError(
     validateTaskData(req.body)
   );
 
-  const { projectId } = req.params;
+  const { pid } = req.params;
   const userId = req.user._id;
-
-  const existing = await Task.findOne({ title });
-  if (existing) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "Task with same title already exists"
-    );
-  }
 
   const assignedToUser = await User.findOne({ email });
   if (!assignedToUser) {
@@ -42,7 +35,7 @@ const createTask = asyncHandler(async (req, res) => {
   }
 
   const membership = await ProjectMember.findOne({
-    project: projectId,
+    project: pid,
     user: assignedToUser._id,
   });
 
@@ -58,15 +51,8 @@ const createTask = asyncHandler(async (req, res) => {
     description,
     assignedBy: userId,
     assignedTo: assignedToUser._id,
-    project: projectId,
+    project: pid,
   });
-
-  if (!task) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "error while creating task"
-    );
-  }
 
   const attachments = await Promise.all(
     (req.files as Express.Multer.File[]).map(async (file) => {
@@ -79,10 +65,10 @@ const createTask = asyncHandler(async (req, res) => {
     })
   );
 
-  console.log("Attachments: ", attachments);
-
   task.attachments = attachments as Attachment[];
   await task.save();
+
+  logger.info(`Task "${title}" created in project ${pid} by user ${userId}`);
 
   res
     .status(ResponseStatus.Success)
@@ -91,41 +77,14 @@ const createTask = asyncHandler(async (req, res) => {
     );
 });
 
-// update task
 const updateTask = asyncHandler(async (req, res) => {
   const { title, description, email, status } = handleZodError(
     validateUpdateTaskData(req.body)
   );
-  const { projectId, taskId } = req.params;
+  const { pid, tid } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(taskId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
-  }
-
-  const existing = await Task.findOne({ title });
-  if (!existing) {
-    throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
-  }
-
-  const assignedToUser = await User.findOne({ email });
-  if (!assignedToUser) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "User with the given email does not exist"
-    );
-  }
-
-  const membership = await ProjectMember.findOne({
-    project: projectId,
-    user: assignedToUser._id,
-  });
-
-  if (!membership) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "Project membership not found with the given email"
-    );
-  }
+  validateObjectId(tid, "Task");
+  validateObjectId(pid, "Project");
 
   const updatePayload: Partial<{
     title: string;
@@ -135,8 +94,30 @@ const updateTask = asyncHandler(async (req, res) => {
   }> = {};
   if (title !== undefined) updatePayload.title = title;
   if (description !== undefined) updatePayload.description = description;
-  if (email !== undefined)
+  if (email !== undefined) {
+    const assignedToUser = await User.findOne({ email });
+    if (!assignedToUser) {
+      throw new CustomError(
+        ResponseStatus.BadRequest,
+        "User with the given email does not exist"
+      );
+    }
+
+    const membership = await ProjectMember.findOne({
+      project: pid,
+      user: assignedToUser._id,
+    });
+
+    if (!membership) {
+      throw new CustomError(
+        ResponseStatus.BadRequest,
+        "Project membership not found with the given email"
+      );
+    }
+
     updatePayload.assignedTo = assignedToUser._id as string;
+  }
+
   if (status !== undefined) updatePayload.status = status;
 
   if (Object.keys(updatePayload).length === 0) {
@@ -146,16 +127,15 @@ const updateTask = asyncHandler(async (req, res) => {
     );
   }
 
-  const updatedTask = await Task.findByIdAndUpdate(taskId, updatePayload, {
+  const updatedTask = await Task.findByIdAndUpdate(tid, updatePayload, {
     new: true,
   });
 
   if (!updatedTask) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "Error while updating task"
-    );
+    throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
   }
+
+  logger.info(`Task ${tid} updated by user ${req.user._id}`);
 
   res
     .status(ResponseStatus.Success)
@@ -168,13 +148,12 @@ const updateTask = asyncHandler(async (req, res) => {
     );
 });
 
-// delete task
 const deleteTask = asyncHandler(async (req, res) => {
-  const { taskId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(taskId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
-  }
-  const existing = await Task.findById(taskId);
+  const { tid } = req.params;
+
+  validateObjectId(tid, "Task");
+
+  const existing = await Task.findById(tid);
   if (!existing) {
     throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
   }
@@ -183,10 +162,13 @@ const deleteTask = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    await SubTask.deleteMany({ task: taskId });
-    await Task.findByIdAndDelete(taskId);
+    await SubTask.deleteMany({ task: tid });
+    await Task.findByIdAndDelete(tid);
 
     session.commitTransaction();
+
+    logger.info(`Task ${tid} and associated subtasks deleted`);
+
     res
       .status(ResponseStatus.Success)
       .json(
@@ -206,11 +188,11 @@ const deleteTask = asyncHandler(async (req, res) => {
     session.endSession();
   }
 });
-const getTasks = asyncHandler(async (req, res) => {
-  // get all tasks
-  const { projectId } = req.params;
 
-  const tasks = await Task.find({ project: projectId })
+const getTasks = asyncHandler(async (req, res) => {
+  const { pid } = req.params;
+
+  const tasks = await Task.find({ project: pid })
     .populate({
       path: "assignedTo",
       select: "-_id fullName avatar",
@@ -222,6 +204,10 @@ const getTasks = asyncHandler(async (req, res) => {
     .select(
       "title description assignedTo assignedBy status attachments updatedAt"
     );
+
+  logger.info(
+    `User ${req.user._id} fetched ${tasks.length} tasks from project ${pid}`
+  );
 
   res
     .status(ResponseStatus.Success)
@@ -235,13 +221,10 @@ const getTasks = asyncHandler(async (req, res) => {
 });
 
 const getTaskById = asyncHandler(async (req, res) => {
-  const { taskId } = req.params;
+  const { tid } = req.params;
+  validateObjectId(tid, "Task");
 
-  if (!mongoose.Types.ObjectId.isValid(taskId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
-  }
-
-  const task = await Task.findById(taskId)
+  const task = await Task.findById(tid)
     .populate({
       path: "assignedTo",
       select: "-_id fullName avatar",
@@ -255,11 +238,10 @@ const getTaskById = asyncHandler(async (req, res) => {
     );
 
   if (!task) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "Invalid task id, task does not exist"
-    );
+    throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
   }
+
+  logger.info(`User ${req.user._id} fetched task ${tid}`);
 
   res
     .status(ResponseStatus.Success)
@@ -269,15 +251,15 @@ const getTaskById = asyncHandler(async (req, res) => {
 });
 
 const createSubTask = asyncHandler(async (req, res) => {
-  const { taskId, projectId } = req.params;
+  const { tid, pid } = req.params;
   const { title } = handleZodError(validateSubTaskData(req.body));
   const userId = req.user._id;
 
-  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+  if (!mongoose.Types.ObjectId.isValid(tid)) {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
   }
 
-  const taskExists = await Task.findById(taskId);
+  const taskExists = await Task.findById(tid);
 
   if (!taskExists) {
     throw new CustomError(ResponseStatus.BadRequest, "Task does not exist");
@@ -285,8 +267,8 @@ const createSubTask = asyncHandler(async (req, res) => {
 
   const subTaskExists = await SubTask.findOne({
     title,
-    project: projectId,
-    task: taskId,
+    project: pid,
+    task: tid,
   });
 
   if (subTaskExists) {
@@ -298,8 +280,8 @@ const createSubTask = asyncHandler(async (req, res) => {
 
   const subTask = await SubTask.create({
     title,
-    project: projectId,
-    task: taskId,
+    project: pid,
+    task: tid,
     createdBy: userId,
   });
 
@@ -326,8 +308,8 @@ const updateSubTask = asyncHandler(async (req, res) => {
   const { title, isCompleted } = handleZodError(
     validateUpdateSubTaskData(req.body)
   );
-  const { subTaskId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(subTaskId)) {
+  const { subtid } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(subtid)) {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
   }
 
@@ -342,13 +324,9 @@ const updateSubTask = asyncHandler(async (req, res) => {
     );
   }
 
-  const updatedData = await SubTask.findByIdAndUpdate(
-    subTaskId,
-    updatePayload,
-    {
-      new: true,
-    }
-  ).select("title isCompleted updatedAt");
+  const updatedData = await SubTask.findByIdAndUpdate(subtid, updatePayload, {
+    new: true,
+  }).select("title isCompleted updatedAt");
 
   if (!updatedData) {
     throw new CustomError(
@@ -369,12 +347,12 @@ const updateSubTask = asyncHandler(async (req, res) => {
 });
 
 const deleteSubTask = asyncHandler(async (req, res) => {
-  const { subTaskId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(subTaskId)) {
+  const { subtid } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(subtid)) {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
   }
 
-  const deletedSubTask = await SubTask.findByIdAndDelete(subTaskId);
+  const deletedSubTask = await SubTask.findByIdAndDelete(subtid);
 
   if (!deletedSubTask) {
     throw new CustomError(ResponseStatus.NotFound, "Subtask not found");
@@ -392,13 +370,13 @@ const deleteSubTask = asyncHandler(async (req, res) => {
 });
 
 const addAttachments = asyncHandler(async (req, res) => {
-  const { taskId } = req.params;
+  const { tid } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+  if (!mongoose.Types.ObjectId.isValid(tid)) {
     throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
   }
 
-  const task = await Task.findById(taskId);
+  const task = await Task.findById(tid);
 
   if (!task) {
     throw new CustomError(ResponseStatus.BadRequest, "Task does not exists");
@@ -433,11 +411,11 @@ const addAttachments = asyncHandler(async (req, res) => {
     );
 });
 const removeAttachments = asyncHandler(async (req, res) => {
-  // const { taskId, attachmentId } = req.params;
-  // if (!mongoose.Types.ObjectId.isValid(taskId)) {
+  // const { tid, attachmentId } = req.params;
+  // if (!mongoose.Types.ObjectId.isValid(tid)) {
   //   throw new CustomError(ResponseStatus.BadRequest, "Invalid task ID");
   // }
-  // const task = await Task.findById(taskId);
+  // const task = await Task.findById(tid);
   // if (!task) {
   //   throw new CustomError(ResponseStatus.BadRequest, "Task does not exists");
   // }
