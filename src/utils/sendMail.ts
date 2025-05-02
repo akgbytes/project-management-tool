@@ -7,8 +7,8 @@ import { ResponseStatus } from "./constants";
 const mailGenerator = new Mailgen({
   theme: "default",
   product: {
-    name: "Task Manager",
-    link: env.APP_URL,
+    name: "Project Nest",
+    link: env.SERVER_URL,
   },
 });
 
@@ -20,7 +20,7 @@ const sendMail = async (
   const transporter = nodemailer.createTransport({
     host: env.MAILTRAP_HOST,
     port: env.MAILTRAP_PORT,
-    secure: false, // true for port 465, false for other ports
+    secure: false,
     auth: {
       user: env.MAILTRAP_USERNAME,
       pass: env.MAILTRAP_PASSWORD,
@@ -54,7 +54,7 @@ const emailVerificationMailContent = (username: string, link: string) => {
       action: {
         instructions: "Click below to verify your email:",
         button: {
-          color: "#22BC66", // Optional action button color
+          color: "#22BC66",
           text: "Verify Email",
           link: link,
         },
@@ -73,7 +73,7 @@ const resetPasswordMailContent = (username: string, link: string) => {
       action: {
         instructions: "Click below to reset your password:",
         button: {
-          color: "#FF613C", // Optional action button color
+          color: "#FF613C",
           text: "Reset Password",
           link: link,
         },
@@ -88,7 +88,7 @@ const sendVerificationMail = async (
   email: string,
   token: string
 ) => {
-  const link = `${env.APP_URL}/api/v1/user/verify/${token}`;
+  const link = `${env.SERVER_URL}/api/v1/user/verify/${token}`;
 
   await sendMail(
     email,
@@ -102,7 +102,7 @@ const sendResetPasswordMail = async (
   email: string,
   token: string
 ) => {
-  const link = `${env.APP_URL}/api/v1/user/reset-password/${token}`;
+  const link = `${env.SERVER_URL}/api/v1/user/reset-password/${token}`;
 
   await sendMail(
     email,

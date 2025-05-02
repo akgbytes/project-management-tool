@@ -1,4 +1,3 @@
-import { Request, Response, NextFunction } from "express";
 import { ProjectMember } from "../models/projectMember.models";
 import { CustomError } from "../utils/CustomError";
 import {
@@ -8,41 +7,36 @@ import {
 } from "../utils/permissions";
 import { ResponseStatus, UserRoleType } from "../utils/constants";
 import { asyncHandler } from "../utils/asyncHandler";
-import mongoose from "mongoose";
+import { validateObjectId } from "../utils/helper";
 
 export const checkPermission = (permission: PermissionType) => {
-  return asyncHandler(
-    async (req: Request, res: Response, next: NextFunction) => {
-      const userId = req.user._id;
-      const projectId = req.params.projectId;
+  return asyncHandler(async (req, res, next) => {
+    const userId = req.user._id;
+    const { pid } = req.params;
 
-      // to avoid error when receiving something like 123 in projectId
-      if (!mongoose.Types.ObjectId.isValid(projectId)) {
-        throw new CustomError(ResponseStatus.BadRequest, "Invalid project ID");
-      }
+    validateObjectId(pid, "Project");
 
-      const membership = await ProjectMember.findOne({
-        project: projectId,
-        user: userId,
-      });
+    const membership = await ProjectMember.findOne({
+      project: pid,
+      user: userId,
+    });
 
-      if (!membership) {
-        throw new CustomError(
-          ResponseStatus.BadRequest,
-          "Project membership not found"
-        );
-      }
-
-      const userRole = membership.role as UserRoleType;
-
-      if (!hasPermission(userRole, permission)) {
-        throw new CustomError(
-          ResponseStatus.Forbidden,
-          PermissionDescriptions[permission] || "Access denied"
-        );
-      }
-
-      next();
+    if (!membership) {
+      throw new CustomError(
+        ResponseStatus.BadRequest,
+        "Project membership not found"
+      );
     }
-  );
+
+    const userRole = membership.role as UserRoleType;
+
+    if (!hasPermission(userRole, permission)) {
+      throw new CustomError(
+        ResponseStatus.Forbidden,
+        PermissionDescriptions[permission] || "Access denied"
+      );
+    }
+
+    next();
+  });
 };

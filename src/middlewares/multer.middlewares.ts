@@ -8,7 +8,8 @@ const storage = multer.diskStorage({
     cb(null, "./public/uploads");
   },
   filename: function (req, file, cb) {
-    // including a random character bcuz collision could still happen if two user upload same file(avatar.png) at the same time
+    // including a random char bcuz collision could still happen if
+    // two user upload same file(avatar.png) at the same time
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const extention = path.extname(file.originalname);
     // avatar-123.png

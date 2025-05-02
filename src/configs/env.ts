@@ -5,19 +5,20 @@ dotenv.config();
 
 const createEnv = (env: NodeJS.ProcessEnv) => {
   const envSchema = z.object({
-    PORT: z.coerce.number(),
+    PORT: z.coerce.number().default(8080),
     MONGO_URI: z.string().nonempty(),
 
     MAILTRAP_HOST: z.string().nonempty(),
     MAILTRAP_PORT: z.coerce.number(),
     MAILTRAP_USERNAME: z.string().nonempty(),
     MAILTRAP_PASSWORD: z.string().nonempty(),
-    MAILTRAP_SENDERMAIL: z.string().nonempty(),
+    MAILTRAP_SENDERMAIL: z.string().email(),
 
-    APP_URL: z.string(),
+    SERVER_URL: z.string().url(),
+    CLIENT_URL: z.string().url(),
 
     ACCESS_TOKEN_SECRET: z.string().nonempty(),
-    ACCESS_TOKEN_EXPIRY: z.string().default("5m"),
+    ACCESS_TOKEN_EXPIRY: z.string().default("1d"),
 
     REFRESH_TOKEN_SECRET: z.string().nonempty(),
     REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
@@ -25,6 +26,8 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
     CLOUDINARY_NAME: z.string().nonempty(),
     CLOUDINARY_API_KEY: z.string().nonempty(),
     CLOUDINARY_SECRET_KEY: z.string().nonempty(),
+
+    MAX_ATTACHMENTS: z.coerce.number().positive(),
   });
 
   const validationResult = envSchema.safeParse(env);
