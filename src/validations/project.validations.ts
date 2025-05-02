@@ -14,15 +14,13 @@ const addProjectMemberSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
 });
 
-const removeProjectMemberSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-});
+const updateMemberRoleSchema = addProjectMemberSchema.pick({ role: true });
 
 const updateProjectSchema = createProjectSchema.partial();
 
 export type ProjectData = z.infer<typeof createProjectSchema>;
 export type ProjectMemberData = z.infer<typeof addProjectMemberSchema>;
-export type RemoveProjectMemberData = z.infer<typeof removeProjectMemberSchema>;
+export type UpdateMemberRoleData = z.infer<typeof updateMemberRoleSchema>;
 
 export const validateProjectData = (data: ProjectData) =>
   createProjectSchema.safeParse(data);
@@ -33,6 +31,5 @@ export const validateUpdateProjectData = (data: Partial<ProjectData>) =>
 export const validateProjectMemberData = (data: ProjectMemberData) =>
   addProjectMemberSchema.safeParse(data);
 
-export const validateRemoveProjectMemberData = (
-  data: RemoveProjectMemberData
-) => removeProjectMemberSchema.safeParse(data);
+export const validateUpdateMemberRoleData = (data: UpdateMemberRoleData) =>
+  updateMemberRoleSchema.safeParse(data);

@@ -7,5 +7,5 @@ connectDb();
 const PORT: number = env.PORT;
 
 app.listen(PORT, () => {
-  logger.info("Server successfully running on port: %d", PORT);
+  logger.info(`Server successfully running on port: ${PORT}`);
 });

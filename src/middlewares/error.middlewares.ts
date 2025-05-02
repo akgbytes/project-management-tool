@@ -11,13 +11,16 @@ const errorHandler = (
 ): void => {
   let customError: CustomError;
 
-  if (!(error instanceof CustomError)) {
+  if (error instanceof CustomError) {
+    customError = error;
+  } else if (error.code === 11000) {
+    const field = Object.keys(error.keyValue)[0];
+    customError = new CustomError(409, `Duplicate value for field: ${field}`);
+  } else {
     customError = new CustomError(
       ResponseStatus.InternalServerError,
       error.message || "Internal Server Error"
     );
-  } else {
-    customError = error;
   }
 
   logger.error(customError.message);

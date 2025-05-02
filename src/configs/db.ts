@@ -8,9 +8,9 @@ const connectDb = async () => {
     logger.info("MongoDB connected successfully!");
   } catch (error: any) {
     if (error instanceof Error) {
-      logger.error("Error connecting mongoDB: %s", error.message);
+      logger.error(`Error connecting mongoDB: ${error.message}`);
     } else {
-      logger.error("Unknown database error: %s", error.message);
+      logger.error(`Unknown database error: ${error.message}`);
     }
     process.exit(1);
   }

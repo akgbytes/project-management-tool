@@ -8,11 +8,15 @@ import {
 import { ResponseStatus, UserRoleType } from "../utils/constants";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateObjectId } from "../utils/helper";
+import logger from "../utils/logger";
 
 export const checkPermission = (permission: PermissionType) => {
   return asyncHandler(async (req, res, next) => {
     const userId = req.user._id;
     const { pid } = req.params;
+
+    logger.info(pid);
+    logger.info(userId);
 
     validateObjectId(pid, "Project");
 

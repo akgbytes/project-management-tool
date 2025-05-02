@@ -38,13 +38,6 @@ const registerUser = asyncHandler(async (req, res) => {
     fullName,
   });
 
-  if (!user) {
-    throw new CustomError(
-      ResponseStatus.InternalServerError,
-      "User registration failed"
-    );
-  }
-
   const { unHashedToken, hashedToken, tokenExpiry } = user.generateToken();
 
   user.emailVerificationToken = hashedToken;

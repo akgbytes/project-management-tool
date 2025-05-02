@@ -70,7 +70,7 @@ router.delete(
   removeMember
 );
 router.patch(
-  "/:pid/members/role/update",
+  "/:pid/members/:mid/update-role",
   checkPermission(Permissions.UpdateRole),
   updateMemberRole
 );
