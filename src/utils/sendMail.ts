@@ -46,68 +46,73 @@ const sendMail = async (
   }
 };
 
-const emailVerificationMailContent = (username: string, link: string) => {
+const emailVerificationMailContent = (fullName: string, link: string) => {
   return {
     body: {
-      name: username,
-      intro: "Welcome to Task Manager! We're thrilled to have you.",
+      name: fullName,
+      intro: "Welcome to Project Nest! We're excited to have you on board.",
       action: {
-        instructions: "Click below to verify your email:",
+        instructions:
+          "To complete your registration, please verify your email by clicking the button below:",
         button: {
           color: "#22BC66",
           text: "Verify Email",
           link: link,
         },
       },
+
       outro:
-        "Need help, or have questions? Just reply to this email, we'd love to help.",
+        "If you have any questions or need support, just reply to this email—we're here to help!",
+      signature: false,
     },
   };
 };
 
-const resetPasswordMailContent = (username: string, link: string) => {
+const resetPasswordMailContent = (fullName: string, link: string) => {
   return {
     body: {
-      name: username,
+      name: fullName,
       intro: "It seems like you requested a password reset.",
       action: {
-        instructions: "Click below to reset your password:",
+        instructions: "To reset your password, click the button below:",
         button: {
           color: "#FF613C",
           text: "Reset Password",
           link: link,
         },
       },
-      outro: "If you didn’t request this, you can ignore this email.",
+      outro:
+        "If you didn't request this, please ignore this email, or contact support if you have concerns.",
+      signature: false,
     },
   };
 };
 
 const sendVerificationMail = async (
-  username: string,
+  fullName: string,
   email: string,
   token: string
 ) => {
-  const link = `${env.SERVER_URL}/api/v1/user/verify/${token}`;
+  const link = `${env.SERVER_URL}/api/v1/users/auth/verify/${token}`;
 
   await sendMail(
     email,
     "Verify Your Email",
-    emailVerificationMailContent(username, link)
+    emailVerificationMailContent(fullName, link)
   );
 };
 
 const sendResetPasswordMail = async (
-  username: string,
+  fullName: string,
   email: string,
   token: string
 ) => {
-  const link = `${env.SERVER_URL}/api/v1/user/reset-password/${token}`;
+  const link = `${env.SERVER_URL}/api/v1/users/auth/password/reset/${token}`;
 
   await sendMail(
     email,
     "Reset Your Password",
-    resetPasswordMailContent(username, link)
+    resetPasswordMailContent(fullName, link)
   );
 };
 

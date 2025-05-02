@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  await sendVerificationMail(user.username, user.email, unHashedToken);
+  await sendVerificationMail(user.fullName, user.email, unHashedToken);
   logger.info("Verification email sent", { email });
 
   res
@@ -150,7 +150,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
   user.emailVerificationExpiry = tokenExpiry;
 
   await user.save();
-  await sendVerificationMail(user.username, user.email, unHashedToken);
+  await sendVerificationMail(user.fullName, user.email, unHashedToken);
 
   logger.info("Verification email resent", {
     email: user.email,
@@ -249,7 +249,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  await sendResetPasswordMail(user.username, user.email, unHashedToken);
+  await sendResetPasswordMail(user.fullName, user.email, unHashedToken);
   logger.info("Password reset email sent", {
     email: user.email,
   });
@@ -266,17 +266,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { resetToken } = req.params;
+  const { token } = req.params;
   const { password } = handleZodError(validateResetPasswordData(req.body));
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+  if (!token) {
+    throw new CustomError(ResponseStatus.BadRequest, "Reset token is missing");
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
-    resetPasswordExpiry: { gt: new Date() },
+    resetPasswordExpiry: { $gt: new Date() },
   });
 
   if (!user) {

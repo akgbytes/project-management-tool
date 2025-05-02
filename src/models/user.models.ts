@@ -9,7 +9,7 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  fullName?: string;
+  fullName: string;
   avatar: string;
 
   isEmailVerified: boolean;
