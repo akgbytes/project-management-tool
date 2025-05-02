@@ -83,7 +83,7 @@ const deleteProject = asyncHandler(async (req, res) => {
   try {
     const deletedProject = await Project.findByIdAndDelete(pid, { session });
     if (!deletedProject) {
-      throw new CustomError(ResponseStatus.NotFound, "Project not found");
+      throw new CustomError(ResponseStatus.NotFound, "Project does not exist");
     }
 
     await ProjectMember.deleteMany({ project: pid }, { session });
@@ -137,7 +137,7 @@ const updateProject = asyncHandler(async (req, res) => {
   });
 
   if (!updatedProject) {
-    throw new CustomError(ResponseStatus.NotFound, "Project not found");
+    throw new CustomError(ResponseStatus.NotFound, "Project does not exist");
   }
 
   logger.info(`Project with ID: ${pid} successfully updated by user ${userId}`);

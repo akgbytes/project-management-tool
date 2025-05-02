@@ -10,33 +10,30 @@ import {
 } from "../validations/notes.validations";
 import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
+import { validateObjectId } from "../utils/helper";
+import logger from "../utils/logger";
 
 const createNote = asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const { pid } = req.params;
   const { content, title } = handleZodError(validateNoteData(req.body));
   const userId = req.user._id;
 
-  const existing = await ProjectNote.findOne({ title, project: projectId });
+  const existing = await ProjectNote.findOne({ title, project: pid });
   if (existing) {
     throw new CustomError(
       ResponseStatus.Conflict,
-      `A note with the title "${title}" already exists in this project`
+      `A note with the title '${title}' already exists in this project`
     );
   }
 
   const note = await ProjectNote.create({
-    project: projectId,
+    project: pid,
     title,
     content,
     createdBy: userId,
   });
 
-  if (!note) {
-    throw new CustomError(
-      ResponseStatus.InternalServerError,
-      "Note creation failed"
-    );
-  }
+  logger.info(`Note "${title}" created by user ${userId} in project ${pid}`);
 
   res
     .status(ResponseStatus.Success)
@@ -50,11 +47,9 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const updateNote = asyncHandler(async (req: Request, res: Response) => {
-  const { noteId } = req.params;
+  const { nid } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(noteId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
-  }
+  validateObjectId(nid, "Note");
 
   const { title, content } = handleZodError(validateUpdateNoteData(req.body));
   const updatePayload: Partial<{ title: string; content: string }> = {};
@@ -69,18 +64,15 @@ const updateNote = asyncHandler(async (req: Request, res: Response) => {
     );
   }
 
-  const updatedNote = await ProjectNote.findByIdAndUpdate(
-    noteId,
-    updatePayload,
-    { new: true }
-  ).select("title content updatedAt");
+  const updatedNote = await ProjectNote.findByIdAndUpdate(nid, updatePayload, {
+    new: true,
+  }).select("title content updatedAt");
 
   if (!updatedNote) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "Note not found or update failed"
-    );
+    throw new CustomError(ResponseStatus.BadRequest, "Note does not exist");
   }
+
+  logger.info(`Note ${nid} successfully updated`);
 
   res
     .status(ResponseStatus.Success)
@@ -94,17 +86,17 @@ const updateNote = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const deleteNote = asyncHandler(async (req: Request, res: Response) => {
-  const { noteId } = req.params;
+  const { nid } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(noteId)) {
-    throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
-  }
+  validateObjectId(nid, "Note");
 
-  const deletedNote = await ProjectNote.findByIdAndDelete(noteId);
+  const deletedNote = await ProjectNote.findByIdAndDelete(nid);
 
   if (!deletedNote) {
-    throw new CustomError(ResponseStatus.NotFound, "Note not found");
+    throw new CustomError(ResponseStatus.NotFound, "Note does not exist");
   }
+
+  logger.info(`Note ${nid} deleted successfully`);
 
   res
     .status(ResponseStatus.Success)
@@ -118,11 +110,11 @@ const deleteNote = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getNotes = asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const { pid } = req.params;
 
   const notes = await ProjectNote.aggregate([
     {
-      $match: { project: new mongoose.Types.ObjectId(projectId) },
+      $match: { project: new mongoose.Types.ObjectId(pid) },
     },
     {
       $lookup: {
@@ -147,6 +139,10 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
     },
   ]);
 
+  logger.info(
+    `Fetched ${notes.length} note(s) for project ${pid} by user ${req.user._id}`
+  );
+
   res
     .status(ResponseStatus.Success)
     .json(
@@ -161,21 +157,22 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getNoteById = asyncHandler(async (req: Request, res: Response) => {
-  const { noteId } = req.params;
+  const { nid } = req.params;
 
-  // if (!mongoose.Types.ObjectId.isValid(noteId)) {
-  //   throw new CustomError(ResponseStatus.BadRequest, "Invalid note ID");
-  // }
+  validateObjectId(nid, "Note");
 
-  const note = await ProjectNote.findById(noteId)
+  const note = await ProjectNote.findById(nid)
     .populate({
       path: "createdBy",
       select: "fullName avatar -_id",
     })
     .select("title content createdBy");
+
   if (!note) {
     throw new CustomError(ResponseStatus.NotFound, "Note does not exist");
   }
+
+  logger.info(`Note ${nid} fetched successfully by user ${req.user._id}`);
 
   res
     .status(ResponseStatus.Success)
