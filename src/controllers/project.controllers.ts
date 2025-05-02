@@ -14,6 +14,7 @@ import { ResponseStatus } from "../utils/constants";
 import { ApiResponse } from "../utils/ApiResponse";
 import { UserRole } from "../utils/constants";
 import { IUser, User } from "../models/user.models";
+import { validateObjectId } from "../utils/helper";
 
 const createProject = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -383,38 +384,23 @@ const addMemberToProject = asyncHandler(async (req, res) => {
 });
 
 const removeMember = asyncHandler(async (req, res) => {
-  const { email } = handleZodError(validateRemoveProjectMemberData(req.body));
-  const { projectId } = req.params;
+  const { mid } = req.params;
+  validateObjectId(mid, "Project Member");
 
-  const userToRemove = await User.findOne({ email });
-  if (!userToRemove) {
-    throw new CustomError(ResponseStatus.NotFound, "User does not exist");
+  const deletedMember = await ProjectMember.findByIdAndDelete(mid);
+  if (!deletedMember) {
+    throw new CustomError(ResponseStatus.NotFound, "Project member not found");
   }
 
-  const projectMember = await ProjectMember.findOne({
-    project: projectId,
-    user: userToRemove._id,
-  });
-
-  if (!projectMember) {
-    throw new CustomError(
-      ResponseStatus.BadRequest,
-      "User is not a member of this project"
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Member removed successfully"
+      )
     );
-  }
-
-  await ProjectMember.findByIdAndDelete(projectMember._id);
-
-  res.status(ResponseStatus.Success).json(
-    new ApiResponse(
-      ResponseStatus.Success,
-      {
-        userId: userToRemove._id,
-        email: userToRemove.email,
-      },
-      "Member removed successfully"
-    )
-  );
 });
 
 const getProjectMembers = asyncHandler(async (req, res) => {

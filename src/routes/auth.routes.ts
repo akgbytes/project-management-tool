@@ -10,7 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   refreshAccessToken,
-} from "../controllers/user.controllers";
+} from "../controllers/auth.controllers";
 import { isLoggedIn } from "../middlewares/auth.middlewares";
 import { upload } from "../middlewares/multer.middlewares";
 
