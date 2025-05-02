@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-
 import { ApiResponse } from "../utils/ApiResponse";
 
 const healthCheck = (req: Request, res: Response) => {

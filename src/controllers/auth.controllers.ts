@@ -4,6 +4,8 @@ import crypto from "crypto";
 import {
   validateLoginData,
   validateRegisterData,
+  validateEmail,
+  validateResetPasswordData,
 } from "../validations/user.validations";
 import { CustomError } from "../utils/CustomError";
 import { ResponseStatus } from "../utils/constants";
@@ -14,11 +16,14 @@ import { handleZodError } from "../utils/handleZodError";
 import jwt from "jsonwebtoken";
 import { env } from "../configs/env";
 import { uploadOnCloudinary } from "../configs/cloudinary";
+import logger from "../utils/logger";
 
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
+const registerUser = asyncHandler(async (req, res) => {
   const { email, password, username, fullName } = handleZodError(
     validateRegisterData(req.body)
   );
+
+  logger.info("Register attempt", { email });
 
   const existingUser = await User.findOne({ email });
 
@@ -45,33 +50,36 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
 
-  // avatar url on db
+  // Saving avatar in db
   let imageUrl;
   if (req.file) {
     imageUrl = await uploadOnCloudinary(req.file.path);
+    logger.info("Avatar uploaded to Cloudinary", { email });
   }
 
-  if (imageUrl && req.file) {
+  if (imageUrl) {
     user.avatar = imageUrl.secure_url;
   }
 
   await user.save();
 
   await sendVerificationMail(user.username, user.email, unHashedToken);
+  logger.info("Verification email sent", { email });
 
   res
     .status(ResponseStatus.Success)
     .json(
       new ApiResponse(
         ResponseStatus.Success,
-        {},
+        user.toJSON(),
         "User registered successfully. Please verify your email"
       )
     );
 });
 
-const verifyUser = asyncHandler(async (req: Request, res: Response) => {
+const verifyUser = asyncHandler(async (req, res) => {
   const { token } = req.params;
+
   if (!token)
     throw new CustomError(
       ResponseStatus.BadRequest,
@@ -97,117 +105,141 @@ const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   user.emailVerificationExpiry = null;
 
   await user.save();
+  logger.info("User email verified", { email: user.email });
 
   res
     .status(ResponseStatus.Success)
     .json(
-      new ApiResponse(ResponseStatus.Success, {}, "Email verified successfully")
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Email verified successfully"
+      )
     );
 });
 
-const resendVerificationEmail = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { email } = req.body;
+const resendVerificationEmail = asyncHandler(async (req, res) => {
+  const { email } = handleZodError(validateEmail(req.body));
 
-    if (!email) {
-      throw new CustomError(
-        ResponseStatus.BadRequest,
-        "Email address is required to send verification link."
-      );
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new CustomError(
-        ResponseStatus.Unauthorized,
-        "No account found with this email address."
-      );
-    }
-
-    if (user.isEmailVerified) {
-      throw new CustomError(
-        ResponseStatus.BadRequest,
-        "Email is already verified"
-      );
-    }
-
-    const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
-
-    user.emailVerificationToken = hashedToken;
-    user.emailVerificationExpiry = tokenExpiry;
-
-    await sendVerificationMail(user.username, user.email, unHashedToken);
-    res
-      .status(ResponseStatus.Success)
-      .json(
-        new ApiResponse(
-          ResponseStatus.Success,
-          {},
-          "Verification mail sent successfully. Please check your inbox"
-        )
-      );
+  if (!email) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Email address is required to send verification link."
+    );
   }
-);
 
-const loginUser = asyncHandler(async (req: Request, res: Response) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new CustomError(
+      ResponseStatus.Unauthorized,
+      "No account found with this email address."
+    );
+  }
+
+  if (user.isEmailVerified) {
+    throw new CustomError(
+      ResponseStatus.BadRequest,
+      "Email is already verified"
+    );
+  }
+
+  const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
+
+  user.emailVerificationToken = hashedToken;
+  user.emailVerificationExpiry = tokenExpiry;
+
+  await user.save();
+  await sendVerificationMail(user.username, user.email, unHashedToken);
+
+  logger.info("Verification email resent", {
+    email: user.email,
+  });
+
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Verification mail sent successfully. Please check your inbox"
+      )
+    );
+});
+
+const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = handleZodError(validateLoginData(req.body));
 
   const user = await User.findOne({ email });
+
   if (!user) {
     throw new CustomError(ResponseStatus.NotFound, "User does not exist");
   }
 
+  if (!user.isEmailVerified) {
+    throw new CustomError(ResponseStatus.Forbidden, "Email is not verified");
+  }
+
   const isPasswordCorrect = await user.isPasswordCorrect(password);
+
   if (!isPasswordCorrect) {
     throw new CustomError(ResponseStatus.Unauthorized, "Invalid credentials");
   }
 
-  // generating access n refresh token
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
   user.refreshToken = refreshToken;
   await user.save();
 
+  logger.info("User logged in", { email: user.email });
+
   res
     .status(ResponseStatus.Success)
     .cookie("accessToken", accessToken, {
       httpOnly: true,
       sameSite: "strict",
+      secure: env.NODE_ENV === "production",
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "strict",
+      secure: env.NODE_ENV === "production",
     })
-    .json(new ApiResponse(ResponseStatus.Success, {}, "Login successful"));
+    .json(new ApiResponse(ResponseStatus.Success, null, "Login successful"));
 });
 
-const logoutUser = asyncHandler(async (req: Request, res: Response) => {
-  await User.findByIdAndUpdate(
-    { _id: req.user._id },
-    {
-      refreshToken: null,
-    }
-  );
+const logoutUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.user._id, {
+    refreshToken: null,
+  });
+
+  logger.info("User logged out", { email: user?.email });
 
   res
     .status(ResponseStatus.Success)
     .clearCookie("accessToken")
     .clearCookie("refreshToken")
     .json(
-      new ApiResponse(ResponseStatus.Success, {}, "Logged out successfully")
+      new ApiResponse(ResponseStatus.Success, null, "Logged out successfully")
     );
 });
 
-const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) {
-    throw new CustomError(ResponseStatus.BadRequest, "Missing required fields");
-  }
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = handleZodError(validateEmail(req.body));
 
   const user = await User.findOne({ email });
+  // dont tell user does not exist due to security reasons
   if (!user) {
-    throw new CustomError(ResponseStatus.NotFound, "User does not exits");
+    return res
+      .status(ResponseStatus.Success)
+      .json(
+        new ApiResponse(
+          ResponseStatus.Success,
+          null,
+          "If an account exists, a reset link has been sent to the email"
+        )
+      );
   }
 
   const { hashedToken, tokenExpiry, unHashedToken } = user.generateToken();
@@ -216,25 +248,34 @@ const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   user.resetPasswordExpiry = tokenExpiry;
 
   await user.save();
+
   await sendResetPasswordMail(user.username, user.email, unHashedToken);
+  logger.info("Password reset email sent", {
+    email: user.email,
+  });
 
   res
     .status(ResponseStatus.Success)
     .json(
       new ApiResponse(
         ResponseStatus.Success,
-        {},
+        null,
         "If an account exists, a reset link has been sent to the email"
       )
     );
 });
 
-const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+const resetPassword = asyncHandler(async (req, res) => {
   const { resetToken } = req.params;
-  const { password } = req.body;
+  const { password } = handleZodError(validateResetPasswordData(req.body));
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
 
   const user = await User.findOne({
-    resetPasswordToken: resetToken,
+    resetPasswordToken: hashedToken,
     resetPasswordExpiry: { gt: new Date() },
   });
 
@@ -250,10 +291,16 @@ const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   user.resetPasswordExpiry = null;
   await user.save();
 
+  logger.info("Password reset successful", { email: user.email });
+
   res
     .status(ResponseStatus.Success)
     .json(
-      new ApiResponse(ResponseStatus.Success, {}, "Password reset successfully")
+      new ApiResponse(
+        ResponseStatus.Success,
+        null,
+        "Password reset successfully"
+      )
     );
 });
 
@@ -295,15 +342,37 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   const cookieOptions = {
     httpOnly: true,
     sameSite: "strict" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
+
+  logger.info("Access token refreshed", { email: user.email });
 
   res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(new ApiResponse(200, {}, "Access token refreshed successfully"));
+    .json(new ApiResponse(200, null, "Access token refreshed successfully"));
+});
+
+const getMe = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new CustomError(ResponseStatus.NotFound, "User not found");
+  }
+
+  logger.info("User profile fetched", { email: user.email });
+  res
+    .status(ResponseStatus.Success)
+    .json(
+      new ApiResponse(
+        ResponseStatus.Success,
+        user.toJSON(),
+        "User profile fetched successfully"
+      )
+    );
 });
 
 export {
@@ -315,4 +384,5 @@ export {
   forgotPassword,
   resetPassword,
   refreshAccessToken,
+  getMe,
 };

@@ -12,14 +12,10 @@ app.use(cors());
 import healthCheckRouter from "./routes/healthCheck.routes";
 import authRouter from "./routes/auth.routes";
 import projectRouter from "./routes/project.routes";
-// import noteRouter from "./routes/note.routes";
-// import taskRouter from "./routes/task.routes";
 import { errorHandler } from "./middlewares/error.middlewares";
 app.use("/api/v1/healthcheck", healthCheckRouter);
-app.use("/api/v1/user/auth", authRouter);
+app.use("/api/v1/users/auth", authRouter);
 app.use("/api/v1/projects", projectRouter);
-// app.use("/api/v1/task", taskRouter);
-// app.use("/api/v1/note", noteRouter);
-
 app.use(errorHandler);
+
 export default app;

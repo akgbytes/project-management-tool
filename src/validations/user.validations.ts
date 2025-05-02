@@ -25,15 +25,27 @@ const registerSchema = z.object({
     .optional(),
 });
 
-const loginSchema = registerSchema.omit({
-  username: true,
-  avatar: true,
-  fullName: true,
+const loginSchema = registerSchema.pick({
+  email: true,
+  password: true,
 });
 
-// types
+const emailSchema = registerSchema.pick({
+  email: true,
+});
+
+const resetPasswordSchema = registerSchema
+  .pick({ password: true })
+  .extend({ confirmPassword: z.string() })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 type RegisterData = z.infer<typeof registerSchema>;
 type LoginData = z.infer<typeof loginSchema>;
+type EmailData = z.infer<typeof emailSchema>;
+type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 
 const validateRegisterData = (data: RegisterData) => {
   return registerSchema.safeParse(data);
@@ -43,4 +55,17 @@ const validateLoginData = (data: LoginData) => {
   return loginSchema.safeParse(data);
 };
 
-export { validateRegisterData, validateLoginData };
+const validateEmail = (data: EmailData) => {
+  return emailSchema.safeParse(data);
+};
+
+const validateResetPasswordData = (data: ResetPasswordData) => {
+  return resetPasswordSchema.safeParse(data);
+};
+
+export {
+  validateRegisterData,
+  validateLoginData,
+  validateEmail,
+  validateResetPasswordData,
+};

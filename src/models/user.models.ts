@@ -121,6 +121,20 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
+userSchema.set("toJSON", {
+  transform(doc, ret) {
+    delete ret.password;
+    delete ret.refreshToken;
+    delete ret.emailVerificationToken;
+    delete ret.emailVerificationExpiry;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpiry;
+    delete ret.__v;
+
+    return ret;
+  },
+});
+
 const User = model("User", userSchema);
 
 export { User };

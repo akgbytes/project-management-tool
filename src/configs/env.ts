@@ -28,6 +28,7 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
     CLOUDINARY_SECRET_KEY: z.string().nonempty(),
 
     MAX_ATTACHMENTS: z.coerce.number().positive(),
+    NODE_ENV: z.string().nonempty(),
   });
 
   const validationResult = envSchema.safeParse(env);
