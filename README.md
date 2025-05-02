@@ -40,7 +40,7 @@
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/akgbytes/project-nest
+   git clone https://github.com/akgbytes/projectnest
    cd project-nest
    ```
 2. Install dependencies:
